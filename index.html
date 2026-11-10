@@ -238,7 +238,7 @@ select:disabled{opacity:.45;cursor:default;}
 
 <main class="main">
   <div class="kpi-strip">
-    <div class="kpi kpi-leads"><div class="kpi-icon">🎯</div><div class="kpi-lbl">Total Leads</div><div class="kpi-val" id="kLeads">—</div><div class="kpi-note" id="kLeadsNote">filtered period</div></div>
+    <div class="kpi kpi-leads"><div class="kpi-icon">🎯</div><div class="kpi-lbl">Meta Generation</div><div class="kpi-val" id="kLeads">—</div><div class="kpi-note" id="kLeadsNote">filtered period</div></div>
     <div class="kpi kpi-spends"><div class="kpi-icon">💸</div><div class="kpi-lbl">Total Spends</div><div class="kpi-val" id="kSpends">—</div><div class="kpi-note" id="kSpendsNote">total spend</div></div>
     <div class="kpi kpi-gcpl"><div class="kpi-icon">📉</div><div class="kpi-lbl">Avg G-CPL</div><div class="kpi-val" id="kGcpl">—</div><div class="kpi-note">Spends ÷ Leads</div></div>
     <div class="kpi kpi-days"><div class="kpi-icon">📅</div><div class="kpi-lbl">Active Days</div><div class="kpi-val" id="kDays">—</div><div class="kpi-note">with data</div></div>
@@ -290,7 +290,8 @@ select:disabled{opacity:.45;cursor:default;}
           <th data-col="date" class="sorted">Date <span class="sort-ico">▼</span></th>
           <th data-col="oem" id="oemColHdr">OEM <span class="sort-ico">↕</span></th>
           <th data-col="model" id="modelColHdr">Model <span class="sort-ico">↕</span></th>
-          <th data-col="leads">Leads <span class="sort-ico">↕</span></th>
+          <th data-col="leads">Meta Gen <span class="sort-ico">↕</span></th>
+          <th id="dleadsColHdr">Dashboard Leads</th>
           <th data-col="spends">Spends (₹) <span class="sort-ico">↕</span></th>
           <th data-col="gcpl">G-CPL (₹) <span class="sort-ico">↕</span></th>
         </tr></thead>
@@ -1142,6 +1143,7 @@ const OEM_COLORS = {
   "Simple Energy":   {hex:"#6366f1", bg:"rgba(99,102,241,.12)"},
 };
 
+const PARTNER_TO_OEM={'Spinny':'Spinny','Spinny Sell Car':'Spinny','Cars24':'Cars24','Cars24 (Sell Car)':'Cars24','Honda Bikes':'Honda'};
 const MONTHS_SHORT=["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 const DAYS=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 
@@ -1159,6 +1161,7 @@ const _latestDate=RAW.reduce((mx,r)=>r[0]>mx?r[0]:mx,'');
 const _latestMonth=_latestDate.slice(0,7);
 let selMonth=_latestMonth||'all',selOEM='all';
 let selModels=new Set(); // empty = all models
+let FB_LEADS={};
 let sortCol='date',sortDir='asc',groupByDate=true,maxGcpl=100;
 
 /* ─── THEME ─────────────────────────── */
@@ -1208,12 +1211,40 @@ function parseCSVText(text){
   if(field||row.length){row.push(field);if(row.some(f=>f))rows.push(row);}
   return rows;
 }
+function parseDTDate(s){const m={Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'};const p=s.split('-');if(p.length!==3)return null;const mo=m[p[1]];if(!mo)return null;const y=p[2].length===2?'20'+p[2]:p[2];return`${y}-${mo}-${p[0].padStart(2,'0')}`;}
+async function fetchDailyTrigger(){
+  try{
+    const resp=await fetch('https://docs.google.com/spreadsheets/d/1KTfrFucSwkstyBJjWrO-gLaxP8yGvuhqADzuUjyc5EI/export?format=csv&gid=2015909339');
+    if(!resp.ok)return;
+    const text=await resp.text();
+    const rows=parseCSVText(text);
+    if(rows.length<2)return;
+    const hdr=rows[0].map(h=>h.trim().toLowerCase());
+    const iPartner=hdr.findIndex(h=>h.includes('partner'));
+    const iSource=hdr.findIndex(h=>h.includes('source'));
+    const iPush=hdr.findIndex(h=>h.includes('push date'));
+    if([iPartner,iSource,iPush].some(i=>i===-1)){console.warn('DailyTrigger: missing cols');return;}
+    const nb={};
+    for(let i=1;i<rows.length;i++){
+      const row=rows[i];
+      if((row[iSource]||'').trim()!=='Facebook')continue;
+      const oem=PARTNER_TO_OEM[(row[iPartner]||'').trim()];
+      if(!oem)continue;
+      const date=parseDTDate((row[iPush]||'').trim());
+      if(!date)continue;
+      const k=date+'|'+oem;
+      nb[k]=(nb[k]||0)+1;
+    }
+    FB_LEADS=nb;
+    console.log('DailyTrigger: loaded',Object.keys(nb).length,'date+OEM keys');
+  }catch(e){console.warn('DailyTrigger:',e.message);}
+}
 async function fetchFromSheets(){
   const btn=document.getElementById('refreshBtn');
   btn.classList.add('spinning');
   const SHEET_URL='https://docs.google.com/spreadsheets/d/1KTfrFucSwkstyBJjWrO-gLaxP8yGvuhqADzuUjyc5EI/export?format=csv&gid=0';
   try{
-    const resp=await fetch(SHEET_URL);
+    const [resp]=await Promise.all([fetch(SHEET_URL),fetchDailyTrigger()]);
     if(!resp.ok)throw new Error('HTTP '+resp.status);
     const text=await resp.text();
     const rows=parseCSVText(text);
@@ -1310,7 +1341,8 @@ function updateThemeBtn(){
 function syncThemeBtn(){
   const isDark=document.documentElement.dataset.theme==='dark';
   document.getElementById('themeIcon').textContent=isDark?'☀️':'🌙';
-  document.getElementById('themeBtn').querySelector('span:last-child') && (document.getElementById('themeBtn').querySelector('span:last-child').textContent=isDark?' Light':' Dark');
+  const btn=document.getElementById('themeBtn');
+  if(btn.lastChild&&btn.lastChild.nodeType===3)btn.lastChild.nodeValue=isDark?' Light':' Dark';
 }
 
 /* Returns Sets of active OEMs and camps for the current month filter */
@@ -1428,6 +1460,10 @@ function getRows(){
 
 function animKpi(id,text){const el=document.getElementById(id);el.classList.remove('anim');void el.offsetWidth;el.textContent=text;el.classList.add('anim');}
 
+function getDFBLeads(date){
+  if(selOEM==='all')return[...new Set(Object.values(PARTNER_TO_OEM))].reduce((s,o)=>s+(FB_LEADS[date+'|'+o]||0),0);
+  return FB_LEADS[date+'|'+selOEM]||0;
+}
 function render(){
   const rows=getRows();
   const totL=rows.reduce((s,r)=>s+r[2],0),totS=rows.reduce((s,r)=>s+r[3],0);
@@ -1455,6 +1491,7 @@ function render(){
   const showMod=!groupByDate;
   document.getElementById('oemColHdr').style.display=showOem?'':'none';
   document.getElementById('modelColHdr').style.display=showMod?'':'none';
+  document.getElementById('dleadsColHdr').style.display=groupByDate?'':'none';
   document.getElementById('tableTitle').textContent=groupByDate?`Day-wise Totals — ${mLabel}`:`Day-wise Performance — ${mLabel}`;
   document.getElementById('tableCount').textContent=`${rows.length} rows`;
 
@@ -1476,12 +1513,15 @@ function render(){
       if(showOem)oemCell=`<td><span class="oem-badge" style="background:${oc.bg};color:${oc.hex};">${info.oem}</span></td>`;
       if(showMod)modCell=`<td><button class="model-pill" style="background:${info.hex}18;color:${info.hex};border:1px solid ${info.hex}28;" onclick="filterModel('${camp.replace(/'/g,"\\'")}','${info.oem.replace(/'/g,"\\'")}')"><span class="camp-dot" style="background:${info.hex}"></span>${info.model}</button></td>`;
     }else{if(showOem)oemCell='<td></td>';if(showMod)modCell='<td></td>';}
-    return`<tr style="--row-accent:${rowAccent}"><td><div class="date-cell"><span class="date-main">${dd}</span><span class="date-day${isW?' weekend':''}">${dn}</span></div></td>${oemCell}${modCell}<td class="num-leads">${fI(leads)}</td><td class="num-spends">${fMon(spends)}</td><td><div class="gcpl-cell"><span class="gcpl-val ${cls}">${fCPL(gv)}</span><div class="gcpl-bar-wrap"><div class="gcpl-bar ${bar}" style="width:${bw}%"></div></div></div></td></tr>`;
+    const fbCell=groupByDate?`<td class="num-leads">${fI(getDFBLeads(date))}</td>`:'';
+    return`<tr style="--row-accent:${rowAccent}"><td><div class="date-cell"><span class="date-main">${dd}</span><span class="date-day${isW?' weekend':''}">${dn}</span></div></td>${oemCell}${modCell}<td class="num-leads">${fI(leads)}</td>${fbCell}<td class="num-spends">${fMon(spends)}</td><td><div class="gcpl-cell"><span class="gcpl-val ${cls}">${fCPL(gv)}</span><div class="gcpl-bar-wrap"><div class="gcpl-bar ${bar}" style="width:${bw}%"></div></div></div></td></tr>`;
   }).join('');
 
   const tgv=totL>0?totS/totL:0;const{cls:tc,bar:tb}=gcplTier(tgv);const tbw=Math.min(100,(tgv/maxGcpl)*100).toFixed(1);
+  const totFbV=groupByDate?rows.reduce((s,r)=>s+getDFBLeads(r[0]),0):0;
+  const totFbCell=groupByDate?`<td class="num-leads">${fI(totFbV)}</td>`:'';
   const xc=(showOem?'<td></td>':'')+(showMod?'<td></td>':'');
-  html+=`<tr class="total-row"><td><span class="total-label">Total</span></td>${xc}<td class="num-leads">${fI(totL)}</td><td class="num-spends">${fMon(totS)}</td><td><div class="gcpl-cell"><span class="gcpl-val ${tc}">${fCPL(tgv)}</span><div class="gcpl-bar-wrap"><div class="gcpl-bar ${tb}" style="width:${tbw}%"></div></div></div></td></tr>`;
+  html+=`<tr class="total-row"><td><span class="total-label">Total</span></td>${xc}<td class="num-leads">${fI(totL)}</td>${totFbCell}<td class="num-spends">${fMon(totS)}</td><td><div class="gcpl-cell"><span class="gcpl-val ${tc}">${fCPL(tgv)}</span><div class="gcpl-bar-wrap"><div class="gcpl-bar ${tb}" style="width:${tbw}%"></div></div></div></td></tr>`;
   document.getElementById('tableBody').innerHTML=html;
 }
 
