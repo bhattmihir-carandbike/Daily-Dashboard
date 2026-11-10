@@ -217,6 +217,10 @@ select:disabled{opacity:.45;cursor:default;}
 .model-opt.sel .model-check{background:var(--accent);border-color:var(--accent);}
 
 @media(max-width:600px){.kpi-val{font-size:18px;}.grid-table td,.grid-table th{padding:7px 10px;}}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]) .num-leads{color:#fff!important;}:root:not([data-theme="light"]) .grid-table th{color:var(--accent)!important;}}
+:root[data-theme="dark"] .num-leads{color:#fff!important;}
+:root[data-theme="dark"] .grid-table th{color:var(--accent)!important;}
+.num-leakage{font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:600;color:var(--fg-2);}
 </style>
 
 <header class="hdr">
@@ -294,6 +298,7 @@ select:disabled{opacity:.45;cursor:default;}
           <th data-col="model" id="modelColHdr">Model <span class="sort-ico">↕</span></th>
           <th data-col="leads">Meta Gen <span class="sort-ico">↕</span></th>
           <th id="dleadsColHdr">Dashboard Leads</th>
+          <th id="leakageColHdr">Leakage</th>
           <th data-col="spends">Spends (₹) <span class="sort-ico">↕</span></th>
           <th data-col="gcpl">G-CPL (₹) <span class="sort-ico">↕</span></th>
         </tr></thead>
@@ -1549,10 +1554,12 @@ function render(){
     const fbCount=groupByDate?getDFBLeads(date):getDFBModelLeads(date,camp);
     const fbCell=`<td class="num-leads">${fbCount?fI(fbCount):'—'}</td>`;
     const metagenCell=dtOnly?`<td class="num-leads" style="opacity:.35">—</td>`:`<td class="num-leads">${fI(leads)}</td>`;
+    const lk=leads-fbCount;
+    const leakageCell=dtOnly?`<td style="opacity:.35">—</td>`:`<td class="num-leakage">${lk===0?'0':lk>0?fI(lk):'−'+fI(-lk)}</td>`;
     const tailCells=dtOnly
       ?`<td class="num-spends" style="opacity:.35">—</td><td style="opacity:.35;padding:0 12px;font-size:13px;">—</td>`
       :`<td class="num-spends">${fMon(spends)}</td><td><div class="gcpl-cell"><span class="gcpl-val ${cls}">${fCPL(gv)}</span><div class="gcpl-bar-wrap"><div class="gcpl-bar ${bar}" style="width:${bw}%"></div></div></div></td>`;
-    return`<tr${dtOnly?' class="dt-only-row"':''} style="--row-accent:${rowAccent}"><td><div class="date-cell"><span class="date-main">${dd}</span><span class="date-day${isW?' weekend':''}">${dn}</span></div></td>${oemCell}${modCell}${metagenCell}${fbCell}${tailCells}</tr>`;
+    return`<tr${dtOnly?' class="dt-only-row"':''} style="--row-accent:${rowAccent}"><td><div class="date-cell"><span class="date-main">${dd}</span><span class="date-day${isW?' weekend':''}">${dn}</span></div></td>${oemCell}${modCell}${metagenCell}${fbCell}${leakageCell}${tailCells}</tr>`;
   }).join('');
 
   const tgv=totL>0?totS/totL:0;const{cls:tc,bar:tb}=gcplTier(tgv);const tbw=Math.min(100,(tgv/maxGcpl)*100).toFixed(1);
@@ -1560,8 +1567,9 @@ function render(){
     ?[...new Set(rows.map(r=>r[0]))].reduce((s,d)=>s+getDFBLeads(d),0)
     :nonGhost.filter(r=>r[1]!=='__g__').reduce((s,r)=>s+getDFBModelLeads(r[0],r[1]),0);
   const totFbCell=`<td class="num-leads">${totFbV?fI(totFbV):'—'}</td>`;
+  const totLk=totL-totFbV;const totLeakCell=`<td class="num-leakage">${totLk===0?'0':totLk>0?fI(totLk):'−'+fI(-totLk)}</td>`;
   const xc=(showOem?'<td></td>':'')+(showMod?'<td></td>':'');
-  html+=`<tr class="total-row"><td><span class="total-label">Total</span></td>${xc}<td class="num-leads">${fI(totL)}</td>${totFbCell}<td class="num-spends">${fMon(totS)}</td><td><div class="gcpl-cell"><span class="gcpl-val ${tc}">${fCPL(tgv)}</span><div class="gcpl-bar-wrap"><div class="gcpl-bar ${tb}" style="width:${tbw}%"></div></div></div></td></tr>`;
+  html+=`<tr class="total-row"><td><span class="total-label">Total</span></td>${xc}<td class="num-leads">${fI(totL)}</td>${totFbCell}${totLeakCell}<td class="num-spends">${fMon(totS)}</td><td><div class="gcpl-cell"><span class="gcpl-val ${tc}">${fCPL(tgv)}</span><div class="gcpl-bar-wrap"><div class="gcpl-bar ${tb}" style="width:${tbw}%"></div></div></div></td></tr>`;
   document.getElementById('tableBody').innerHTML=html;
 }
 
