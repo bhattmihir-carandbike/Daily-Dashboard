@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+﻿<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>Digital Campaign Tracker</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -1221,7 +1221,7 @@ async function fetchDailyTrigger(){
   try{
     const mLU={};
     Object.entries(OEM_MAP).forEach(([ck,info])=>{
-      const n=(info.model||'').toLowerCase().replace(/[\s'’\-\(\)]/g,'');
+      const n=(info.model||'').toLowerCase().replace(/[\s''\-\(\)]/g,'');
       if(n){if(!mLU[n])mLU[n]=[];mLU[n].push(ck);}
     });
     const resp=await fetch('https://docs.google.com/spreadsheets/d/1KTfrFucSwkstyBJjWrO-gLaxP8yGvuhqADzuUjyc5EI/export?format=csv&gid=2015909339');
@@ -1246,10 +1246,10 @@ async function fetchDailyTrigger(){
       const pk=date+'|'+partner;
       nb[pk]=(nb[pk]||0)+1;
       const ck2=DT_PARTNER_TO_CAMP[partner];
-      if(ck2){const mk2=date+’|’+ck2;nbM[mk2]=(nbM[mk2]||0)+1;}
+      if(ck2){const mk2=date+'|'+ck2;nbM[mk2]=(nbM[mk2]||0)+1;}
       if(iModel!==-1){
-        const dtMod=(row[iModel]||’’).trim().toLowerCase().replace(/[\s’’\-\(\)]/g,’’);
-        (mLU[dtMod]||[]).forEach(ck=>{const mk=date+’|’+ck;nbM[mk]=(nbM[mk]||0)+1;});
+        const dtMod=(row[iModel]||'').trim().toLowerCase().replace(/[\s''\-\(\)]/g,'');
+        (mLU[dtMod]||[]).forEach(ck=>{const mk=date+'|'+ck;nbM[mk]=(nbM[mk]||0)+1;});
       }
     }
     FB_LEADS=nb;FB_MODEL_LEADS=nbM;
