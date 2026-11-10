@@ -1219,13 +1219,13 @@ async function fetchFromSheets(){
     const rows=parseCSVText(text);
     if(rows.length<2)throw new Error('Empty sheet');
     const hdr=rows[0].map(h=>h.trim().toLowerCase());
-    const iDate =hdr.findIndex(h=>h.includes('date'));
+    const iDate =hdr.findIndex(h=>h.includes('date')&&!h.includes('reporting'));
     const iAdset=hdr.findIndex(h=>h.includes('ad set')||h.includes('adset'));
-    const iCamp =hdr.findIndex(h=>h.includes('campaign'));
-    const iLeads=hdr.findIndex(h=>h.includes('lead')||h.includes('result'));
+    const iCamp =hdr.findIndex(h=>h.includes('campaign for')||h.includes('campaign_for'));
+    const iLeads=hdr.findIndex(h=>h==='results'||h==='leads'||(h.includes('result')&&!h.includes('type')&&!h.includes('initial')&&!h.includes('cost'))||(h.includes('lead')&&!h.includes('type')));
     const iSpend=hdr.findIndex(h=>h.includes('amount')||h.includes('spend'));
     console.log('Sheets columns detected — date:',iDate,'adset:',iAdset,'campaign:',iCamp,'leads:',iLeads,'spend:',iSpend,'| headers:',rows[0].join(' | '));
-    if([iDate,iLeads,iSpend].some(i=>i===-1))
+    if([iDate,iCamp,iLeads,iSpend].some(i=>i===-1))
       throw new Error('Missing columns. Found: '+rows[0].join(', '));
     const agg={};
     for(let i=1;i<rows.length;i++){
