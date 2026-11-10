@@ -1117,7 +1117,8 @@ const RAW = [
 
 const OEM_MAP = {
   "Spinny Used Car":    {oem:"Spinny",          model:"Used Car",      hex:"#3848d4"},
-  "Cars24":             {oem:"Cars24",           model:"Cars24",        hex:"#0ea5e9"},
+  "Cars24":             {oem:"Cars24",           model:"Used Car",      hex:"#0ea5e9"},
+  "Cars24 Sell Car":    {oem:"Cars24",           model:"Sell Car",      hex:"#38bdf8"},
   "Spinny Sell Car":    {oem:"Spinny",           model:"Sell Car",      hex:"#38c4e0"},
   "CL Jawa 42 Bobber":{oem:"Classic Legends", model:"Jawa 42 Bobber",   hex:"#7c3aed"},
   "CL Jawa 42 OG":    {oem:"Classic Legends", model:"Jawa 42 OG",       hex:"#9d6cf6"},
@@ -1145,8 +1146,9 @@ const OEM_COLORS = {
   "Simple Energy":   {hex:"#6366f1", bg:"rgba(99,102,241,.12)"},
 };
 
-const PARTNER_TO_OEM_GROUP={'Spinny':'Spinny','Spinny Sell Car':'Spinny','Cars24':'Cars24','Honda Bikes':'Honda'};
-const OEM_TO_DT_PARTNERS={'Spinny':['Spinny','Spinny Sell Car'],'Cars24':['Cars24'],'Honda':['Honda Bikes']};
+const PARTNER_TO_OEM_GROUP={'Spinny':'Spinny','Spinny Sell Car':'Spinny','Cars24':'Cars24','Cars24 (Sell Car)':'Cars24','Honda Bikes':'Honda'};
+const OEM_TO_DT_PARTNERS={'Spinny':['Spinny','Spinny Sell Car'],'Cars24':['Cars24','Cars24 (Sell Car)'],'Honda':['Honda Bikes']};
+const DT_PARTNER_TO_CAMP={'Spinny':'Spinny Used Car','Spinny Sell Car':'Spinny Sell Car','Cars24':'Cars24','Cars24 (Sell Car)':'Cars24 Sell Car'};
 const MONTHS_SHORT=["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 const DAYS=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 
@@ -1243,9 +1245,11 @@ async function fetchDailyTrigger(){
       if(!date)continue;
       const pk=date+'|'+partner;
       nb[pk]=(nb[pk]||0)+1;
+      const ck2=DT_PARTNER_TO_CAMP[partner];
+      if(ck2){const mk2=date+’|’+ck2;nbM[mk2]=(nbM[mk2]||0)+1;}
       if(iModel!==-1){
-        const dtMod=(row[iModel]||'').trim().toLowerCase().replace(/[\s'’\-\(\)]/g,'');
-        (mLU[dtMod]||[]).forEach(ck=>{const mk=date+'|'+ck;nbM[mk]=(nbM[mk]||0)+1;});
+        const dtMod=(row[iModel]||’’).trim().toLowerCase().replace(/[\s’’\-\(\)]/g,’’);
+        (mLU[dtMod]||[]).forEach(ck=>{const mk=date+’|’+ck;nbM[mk]=(nbM[mk]||0)+1;});
       }
     }
     FB_LEADS=nb;FB_MODEL_LEADS=nbM;
@@ -1483,6 +1487,11 @@ function getRows(){
 function animKpi(id,text){const el=document.getElementById(id);el.classList.remove('anim');void el.offsetWidth;el.textContent=text;el.classList.add('anim');}
 
 function getDFBLeads(date){
+  if(selModels.size>0){
+    let t=0;
+    selModels.forEach(camp=>{t+=FB_MODEL_LEADS[date+'|'+camp]||0;});
+    return t;
+  }
   const pp=selOEM==='all'?Object.values(OEM_TO_DT_PARTNERS).flat():(OEM_TO_DT_PARTNERS[selOEM]||[]);
   return pp.reduce((s,p)=>s+(FB_LEADS[date+'|'+p]||0),0);
 }
