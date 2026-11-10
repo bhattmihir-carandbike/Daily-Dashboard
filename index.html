@@ -1157,7 +1157,7 @@ function gcplTier(v){if(v<=15)return{cls:'gcpl-good',bar:'good'};if(v<=30)return
 
 const _latestDate=RAW.reduce((mx,r)=>r[0]>mx?r[0]:mx,'');
 const _latestMonth=_latestDate.slice(0,7);
-let selMonth=_latestMonth,selOEM='all';
+let selMonth=_latestMonth||'all',selOEM='all';
 let selModels=new Set(); // empty = all models
 let sortCol='date',sortDir='asc',groupByDate=true,maxGcpl=100;
 
@@ -1188,10 +1188,11 @@ function rebuildMonthOptions(rows){
     sorted.map(m=>`<option value="${m}">${MNAMES[+m.split('-')[1]]} ${m.split('-')[0]}</option>`).join('');
 }
 function _applyData(agg){
+  if(!Object.keys(agg).length){console.warn('fetchFromSheets: no rows matched, keeping existing data');return;}
   RAW.length=0;
   Object.keys(agg).sort().forEach(k=>{const[d,c]=k.split('|');RAW.push([d,c,Math.round(agg[k][0]),Math.round(agg[k][1]*100)/100]);});
   rebuildMonthOptions(RAW);
-  const latest=RAW.reduce((mx,r)=>r[0]>mx?r[0]:mx,'').slice(0,7);
+  const latest=RAW.reduce((mx,r)=>r[0]>mx?r[0]:mx,'').slice(0,7)||'all';
   selMonth=latest;selOEM='all';selModels.clear();sortCol='date';sortDir='asc';groupByDate=true;
   document.getElementById('monthSel').value=latest;
   buildOemTabs();buildModelDrop();updateModelLabel();render();
@@ -1220,7 +1221,8 @@ async function fetchFromSheets(){
     const hdr=rows[0].map(h=>h.trim().toLowerCase());
     const iDate =hdr.findIndex(h=>h.includes('date'));
     const iAdset=hdr.findIndex(h=>h.includes('ad set')||h.includes('adset'));
-    const iCamp =hdr.findIndex(h=>h.includes('campaign')&&(h.includes('for')||h.includes('name')));
+    const iCamp =hdr.findIndex(h=>h.includes('campaign'));
+    console.log('Sheets columns detected — date:',iDate,'adset:',iAdset,'campaign:',iCamp,'leads:',iLeads,'spend:',iSpend,'| headers:',rows[0].join(' | '));
     const iLeads=hdr.findIndex(h=>h.includes('lead')||h.includes('result'));
     const iSpend=hdr.findIndex(h=>h.includes('amount')||h.includes('spend'));
     if([iDate,iLeads,iSpend].some(i=>i===-1))
@@ -1237,6 +1239,7 @@ async function fetchFromSheets(){
       let date;
       if(/^\d{2}-\d{2}-\d{4}$/.test(rawDate)){const[d,m,y]=rawDate.split('-');date=`${y}-${m}-${d}`;}
       else if(/^\d{4}-\d{2}-\d{2}$/.test(rawDate))date=rawDate;
+      else if(/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(rawDate)){const p=rawDate.split('/');date=`${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`;}
       else continue;
       let campKey=campFor;
       if(campFor==='Classic Legends 2W'){
@@ -1430,7 +1433,7 @@ function render(){
   const totL=rows.reduce((s,r)=>s+r[2],0),totS=rows.reduce((s,r)=>s+r[3],0);
   const gcpl=totL>0?totS/totL:0;
   animKpi('kLeads',fI(totL));animKpi('kSpends',fMon(totS));animKpi('kGcpl',fCPL(gcpl));animKpi('kDays',new Set(rows.map(r=>r[0])).size.toString());
-  const mLabel=selMonth==='all'?'Jan–Nov 2026':MONTHS_SHORT[+selMonth.split('-')[1]]+' 2026';
+  const mLabel=(!selMonth||selMonth==='all')?'All time':(MONTHS_SHORT[+selMonth.split('-')[1]]||'')+' '+selMonth.split('-')[0];
   document.getElementById('kLeadsNote').textContent=mLabel;
   document.getElementById('kSpendsNote').textContent=mLabel;
   document.getElementById('hdrRange').textContent=mLabel;
