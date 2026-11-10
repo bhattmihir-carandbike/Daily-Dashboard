@@ -161,6 +161,8 @@ select:disabled{opacity:.45;cursor:default;}
 .gcpl-bar.good{background:#10b981;}.gcpl-bar.ok{background:#f59e0b;}.gcpl-bar.warn{background:#f97316;}.gcpl-bar.bad{background:#ef4444;}
 
 .total-row td{background:var(--surface-2)!important;border-top:2px solid var(--border)!important;border-bottom:none!important;font-weight:700;}
+.dt-only-row td{background:rgba(16,185,129,.03)!important;}
+.dt-only-row td:first-child{border-left:3px solid #10b981!important;}
 .total-label{font-size:12.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--fg-3);}
 .empty-state{padding:60px 24px;text-align:center;color:var(--fg-2);}
 .empty-icon{font-size:38px;margin-bottom:12px;opacity:.3;}
@@ -1143,7 +1145,8 @@ const OEM_COLORS = {
   "Simple Energy":   {hex:"#6366f1", bg:"rgba(99,102,241,.12)"},
 };
 
-const PARTNER_TO_OEM={'Spinny':'Spinny','Spinny Sell Car':'Spinny','Cars24':'Cars24','Cars24 (Sell Car)':'Cars24','Honda Bikes':'Honda'};
+const PARTNER_TO_OEM_GROUP={'Spinny':'Spinny','Spinny Sell Car':'Spinny','Cars24':'Cars24','Honda Bikes':'Honda'};
+const OEM_TO_DT_PARTNERS={'Spinny':['Spinny','Spinny Sell Car'],'Cars24':['Cars24'],'Honda':['Honda Bikes']};
 const MONTHS_SHORT=["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 const DAYS=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 
@@ -1161,7 +1164,7 @@ const _latestDate=RAW.reduce((mx,r)=>r[0]>mx?r[0]:mx,'');
 const _latestMonth=_latestDate.slice(0,7);
 let selMonth=_latestMonth||'all',selOEM='all';
 let selModels=new Set(); // empty = all models
-let FB_LEADS={};
+let FB_LEADS={};let FB_MODEL_LEADS={};
 let sortCol='date',sortDir='asc',groupByDate=true,maxGcpl=100;
 
 /* ─── THEME ─────────────────────────── */
@@ -1214,6 +1217,11 @@ function parseCSVText(text){
 function parseDTDate(s){const m={Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'};const p=s.split('-');if(p.length!==3)return null;const mo=m[p[1]];if(!mo)return null;const y=p[2].length===2?'20'+p[2]:p[2];return`${y}-${mo}-${p[0].padStart(2,'0')}`;}
 async function fetchDailyTrigger(){
   try{
+    const mLU={};
+    Object.entries(OEM_MAP).forEach(([ck,info])=>{
+      const n=(info.model||'').toLowerCase().replace(/[\s'’\-\(\)]/g,'');
+      if(n){if(!mLU[n])mLU[n]=[];mLU[n].push(ck);}
+    });
     const resp=await fetch('https://docs.google.com/spreadsheets/d/1KTfrFucSwkstyBJjWrO-gLaxP8yGvuhqADzuUjyc5EI/export?format=csv&gid=2015909339');
     if(!resp.ok)return;
     const text=await resp.text();
@@ -1223,20 +1231,25 @@ async function fetchDailyTrigger(){
     const iPartner=hdr.findIndex(h=>h.includes('partner'));
     const iSource=hdr.findIndex(h=>h.includes('source'));
     const iPush=hdr.findIndex(h=>h.includes('push date'));
+    const iModel=hdr.findIndex(h=>h==='model'||(h.includes('model')&&!h.includes('variant')&&!h.includes('form')));
     if([iPartner,iSource,iPush].some(i=>i===-1)){console.warn('DailyTrigger: missing cols');return;}
-    const nb={};
+    const nb={},nbM={};
     for(let i=1;i<rows.length;i++){
       const row=rows[i];
       if((row[iSource]||'').trim()!=='Facebook')continue;
-      const oem=PARTNER_TO_OEM[(row[iPartner]||'').trim()];
-      if(!oem)continue;
+      const partner=(row[iPartner]||'').trim();
+      if(!PARTNER_TO_OEM_GROUP[partner])continue;
       const date=parseDTDate((row[iPush]||'').trim());
       if(!date)continue;
-      const k=date+'|'+oem;
-      nb[k]=(nb[k]||0)+1;
+      const pk=date+'|'+partner;
+      nb[pk]=(nb[pk]||0)+1;
+      if(iModel!==-1){
+        const dtMod=(row[iModel]||'').trim().toLowerCase().replace(/[\s'’\-\(\)]/g,'');
+        (mLU[dtMod]||[]).forEach(ck=>{const mk=date+'|'+ck;nbM[mk]=(nbM[mk]||0)+1;});
+      }
     }
-    FB_LEADS=nb;
-    console.log('DailyTrigger: loaded',Object.keys(nb).length,'date+OEM keys');
+    FB_LEADS=nb;FB_MODEL_LEADS=nbM;
+    console.log('DailyTrigger:',Object.keys(nb).length,'partner-date,',Object.keys(nbM).length,'model-date keys');
   }catch(e){console.warn('DailyTrigger:',e.message);}
 }
 async function fetchFromSheets(){
@@ -1441,7 +1454,16 @@ function getRows(){
   });
   if(groupByDate){
     const map=new Map();
-    rows.forEach(([date,,l,s])=>{if(!map.has(date))map.set(date,[date,'__g__',0,0]);const e=map.get(date);e[2]+=l;e[3]+=s;});
+    rows.forEach(([date,,l,s])=>{if(!map.has(date))map.set(date,[date,'__g__',0,0,false]);const e=map.get(date);e[2]+=l;e[3]+=s;});
+    if(selModels.size===0){
+      Object.keys(FB_LEADS).forEach(key=>{
+        const sep=key.lastIndexOf('|');const date=key.substring(0,sep);const partner=key.substring(sep+1);
+        if(selMonth!=='all'&&!date.startsWith(selMonth))return;
+        const og=PARTNER_TO_OEM_GROUP[partner];if(!og)return;
+        if(selOEM!=='all'&&selOEM!==og)return;
+        if(!map.has(date))map.set(date,[date,'__g__',0,0,true]);
+      });
+    }
     rows=[...map.values()];
   }
   maxGcpl=Math.max(100,...rows.map(r=>r[2]>0?r[3]/r[2]:0));
@@ -1461,14 +1483,16 @@ function getRows(){
 function animKpi(id,text){const el=document.getElementById(id);el.classList.remove('anim');void el.offsetWidth;el.textContent=text;el.classList.add('anim');}
 
 function getDFBLeads(date){
-  if(selOEM==='all')return[...new Set(Object.values(PARTNER_TO_OEM))].reduce((s,o)=>s+(FB_LEADS[date+'|'+o]||0),0);
-  return FB_LEADS[date+'|'+selOEM]||0;
+  const pp=selOEM==='all'?Object.values(OEM_TO_DT_PARTNERS).flat():(OEM_TO_DT_PARTNERS[selOEM]||[]);
+  return pp.reduce((s,p)=>s+(FB_LEADS[date+'|'+p]||0),0);
 }
+function getDFBModelLeads(date,campKey){return FB_MODEL_LEADS[date+'|'+campKey]||0;}
 function render(){
   const rows=getRows();
-  const totL=rows.reduce((s,r)=>s+r[2],0),totS=rows.reduce((s,r)=>s+r[3],0);
+  const nonGhost=rows.filter(r=>r[4]!==true);
+  const totL=nonGhost.reduce((s,r)=>s+r[2],0),totS=nonGhost.reduce((s,r)=>s+r[3],0);
   const gcpl=totL>0?totS/totL:0;
-  animKpi('kLeads',fI(totL));animKpi('kSpends',fMon(totS));animKpi('kGcpl',fCPL(gcpl));animKpi('kDays',new Set(rows.map(r=>r[0])).size.toString());
+  animKpi('kLeads',fI(totL));animKpi('kSpends',fMon(totS));animKpi('kGcpl',fCPL(gcpl));animKpi('kDays',new Set(nonGhost.map(r=>r[0])).size.toString());
   const mLabel=(!selMonth||selMonth==='all')?'All time':(MONTHS_SHORT[+selMonth.split('-')[1]]||'')+' '+selMonth.split('-')[0];
   document.getElementById('kLeadsNote').textContent=mLabel;
   document.getElementById('kSpendsNote').textContent=mLabel;
@@ -1491,14 +1515,14 @@ function render(){
   const showMod=!groupByDate;
   document.getElementById('oemColHdr').style.display=showOem?'':'none';
   document.getElementById('modelColHdr').style.display=showMod?'':'none';
-  document.getElementById('dleadsColHdr').style.display=groupByDate?'':'none';
+  document.getElementById('dleadsColHdr').style.display='';
   document.getElementById('tableTitle').textContent=groupByDate?`Day-wise Totals — ${mLabel}`:`Day-wise Performance — ${mLabel}`;
   document.getElementById('tableCount').textContent=`${rows.length} rows`;
 
   if(!rows.length){document.getElementById('tableBody').innerHTML=`<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">📭</div><div class="empty-text">No data for this filter.</div></div></td></tr>`;return;}
 
   let html=rows.map(r=>{
-    const[date,camp,leads,spends]=r;
+    const[date,camp,leads,spends]=r;const dtOnly=r[4]===true;
     const[y,m,d]=date.split('-').map(Number);
     const dt=new Date(y,m-1,d),dn=DAYS[dt.getDay()],isW=dt.getDay()===0||dt.getDay()===6;
     const dd=`${String(d).padStart(2,'0')} ${MONTHS_SHORT[m]}`;
@@ -1513,13 +1537,20 @@ function render(){
       if(showOem)oemCell=`<td><span class="oem-badge" style="background:${oc.bg};color:${oc.hex};">${info.oem}</span></td>`;
       if(showMod)modCell=`<td><button class="model-pill" style="background:${info.hex}18;color:${info.hex};border:1px solid ${info.hex}28;" onclick="filterModel('${camp.replace(/'/g,"\\'")}','${info.oem.replace(/'/g,"\\'")}')"><span class="camp-dot" style="background:${info.hex}"></span>${info.model}</button></td>`;
     }else{if(showOem)oemCell='<td></td>';if(showMod)modCell='<td></td>';}
-    const fbCell=groupByDate?`<td class="num-leads">${fI(getDFBLeads(date))}</td>`:'';
-    return`<tr style="--row-accent:${rowAccent}"><td><div class="date-cell"><span class="date-main">${dd}</span><span class="date-day${isW?' weekend':''}">${dn}</span></div></td>${oemCell}${modCell}<td class="num-leads">${fI(leads)}</td>${fbCell}<td class="num-spends">${fMon(spends)}</td><td><div class="gcpl-cell"><span class="gcpl-val ${cls}">${fCPL(gv)}</span><div class="gcpl-bar-wrap"><div class="gcpl-bar ${bar}" style="width:${bw}%"></div></div></div></td></tr>`;
+    const fbCount=groupByDate?getDFBLeads(date):getDFBModelLeads(date,camp);
+    const fbCell=`<td class="num-leads">${fbCount?fI(fbCount):'—'}</td>`;
+    const metagenCell=dtOnly?`<td class="num-leads" style="opacity:.35">—</td>`:`<td class="num-leads">${fI(leads)}</td>`;
+    const tailCells=dtOnly
+      ?`<td class="num-spends" style="opacity:.35">—</td><td style="opacity:.35;padding:0 12px;font-size:13px;">—</td>`
+      :`<td class="num-spends">${fMon(spends)}</td><td><div class="gcpl-cell"><span class="gcpl-val ${cls}">${fCPL(gv)}</span><div class="gcpl-bar-wrap"><div class="gcpl-bar ${bar}" style="width:${bw}%"></div></div></div></td>`;
+    return`<tr${dtOnly?' class="dt-only-row"':''} style="--row-accent:${rowAccent}"><td><div class="date-cell"><span class="date-main">${dd}</span><span class="date-day${isW?' weekend':''}">${dn}</span></div></td>${oemCell}${modCell}${metagenCell}${fbCell}${tailCells}</tr>`;
   }).join('');
 
   const tgv=totL>0?totS/totL:0;const{cls:tc,bar:tb}=gcplTier(tgv);const tbw=Math.min(100,(tgv/maxGcpl)*100).toFixed(1);
-  const totFbV=groupByDate?rows.reduce((s,r)=>s+getDFBLeads(r[0]),0):0;
-  const totFbCell=groupByDate?`<td class="num-leads">${fI(totFbV)}</td>`:'';
+  const totFbV=groupByDate
+    ?[...new Set(rows.map(r=>r[0]))].reduce((s,d)=>s+getDFBLeads(d),0)
+    :nonGhost.filter(r=>r[1]!=='__g__').reduce((s,r)=>s+getDFBModelLeads(r[0],r[1]),0);
+  const totFbCell=`<td class="num-leads">${totFbV?fI(totFbV):'—'}</td>`;
   const xc=(showOem?'<td></td>':'')+(showMod?'<td></td>':'');
   html+=`<tr class="total-row"><td><span class="total-label">Total</span></td>${xc}<td class="num-leads">${fI(totL)}</td>${totFbCell}<td class="num-spends">${fMon(totS)}</td><td><div class="gcpl-cell"><span class="gcpl-val ${tc}">${fCPL(tgv)}</span><div class="gcpl-bar-wrap"><div class="gcpl-bar ${tb}" style="width:${tbw}%"></div></div></div></td></tr>`;
   document.getElementById('tableBody').innerHTML=html;
