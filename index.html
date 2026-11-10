@@ -217,10 +217,12 @@ select:disabled{opacity:.45;cursor:default;}
 .model-opt.sel .model-check{background:var(--accent);border-color:var(--accent);}
 
 @media(max-width:600px){.kpi-val{font-size:18px;}.grid-table td,.grid-table th{padding:7px 10px;}}
-@media(prefers-color-scheme:dark){:root:not([data-theme="light"]) .num-leads{color:#fff!important;}:root:not([data-theme="light"]) .grid-table th{color:var(--accent)!important;}}
-:root[data-theme="dark"] .num-leads{color:#fff!important;}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]) .num-leads,:root:not([data-theme="light"]) .num-leakage{color:#fff!important;}:root:not([data-theme="light"]) .grid-table th{color:var(--accent)!important;}}
+:root[data-theme="dark"] .num-leads,:root[data-theme="dark"] .num-leakage{color:#fff!important;}
 :root[data-theme="dark"] .grid-table th{color:var(--accent)!important;}
 .num-leakage{font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:600;color:var(--fg-2);}
+.grid-table th,.grid-table td{text-align:center;}
+.grid-table th:first-child,.grid-table td:first-child{text-align:left;}
 </style>
 
 <header class="hdr">
