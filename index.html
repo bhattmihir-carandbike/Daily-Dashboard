@@ -1259,8 +1259,8 @@ const OEM_COLORS = {
   "Simple Energy":   {hex:"#6366f1", bg:"rgba(99,102,241,.12)"},
 };
 
-const PARTNER_TO_OEM_GROUP={'Spinny':'Spinny','Spinny Sell Car':'Spinny','Cars24':'Cars24','Cars24 (Sell Car)':'Cars24','Honda Bikes':'Honda'};
-const OEM_TO_DT_PARTNERS={'Spinny':['Spinny','Spinny Sell Car'],'Cars24':['Cars24','Cars24 (Sell Car)'],'Honda':['Honda Bikes']};
+const PARTNER_TO_OEM_GROUP={'Spinny':'Spinny','Spinny Sell Car':'Spinny','Cars24':'Cars24','Cars24 (Sell Car)':'Cars24','Honda Bikes':'Honda','Policy Bazzar':'Policy Bazzar'};
+const OEM_TO_DT_PARTNERS={'Spinny':['Spinny','Spinny Sell Car'],'Cars24':['Cars24','Cars24 (Sell Car)'],'Honda':['Honda Bikes'],'Policy Bazzar':['Policy Bazzar']};
 const DT_PARTNER_TO_CAMP={'Spinny':'Spinny Used Car','Spinny Sell Car':'Spinny Sell Car','Cars24':'Cars24','Cars24 (Sell Car)':'Cars24 Sell Car'};
 const MONTHS_SHORT=["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 const DAYS=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
@@ -1368,6 +1368,7 @@ async function fetchDailyTrigger(){
       dtGen[pk][srcType]++;
       if(isSuccess){if(!dtTrig[pk])dtTrig[pk]={fb:0,org:0,cross:0};dtTrig[pk][srcType]++;}
       const campKeys=new Set();
+      campKeys.add(partner);
       const ck2=DT_PARTNER_TO_CAMP[partner];
       if(ck2)campKeys.add(ck2);
       if(iModel!==-1){
