@@ -7,7 +7,7 @@
 
 <style>
 :root {
-  --bg: #f1f3fb; --surface: #ffffff; --surface-2: #f5f7fe; --surface-3: #eef1fc;
+  --bg: #ffffff; --surface: #ffffff; --surface-2: #f5f7fe; --surface-3: #eef1fc;
   --fg: #0b1040; --fg-2: #4a5480; --fg-3: #9099c0;
   --border: #dce3f5; --border-2: #e8edf8; --accent: #3848d4; --accent-soft: #eef0fb;
   --shadow-sm: 0 1px 2px rgba(10,16,60,.06);
@@ -227,13 +227,34 @@ select:disabled{opacity:.45;cursor:default;}
 :root[data-theme="dark"] .grid-table th{color:var(--accent)!important;}
 .num-leakage{font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:600;color:var(--fg-2);}
 /* TRIGGER TABLE */
-.grp-hdr{font-size:11px;text-transform:uppercase;letter-spacing:.04em;font-weight:700;padding-top:5px;padding-bottom:5px;}
-.grp-gen{background:var(--accent-soft);color:var(--accent);}
-.grp-trig{background:rgba(16,185,129,.1);color:#10b981;}
-.grp-fail{background:rgba(239,68,68,.08);color:#ef4444;}
-@media(prefers-color-scheme:dark){:root:not([data-theme="light"]) .grp-trig{background:rgba(16,185,129,.15);}:root:not([data-theme="light"]) .grp-fail{background:rgba(239,68,68,.13);}}
-:root[data-theme="dark"] .grp-trig{background:rgba(16,185,129,.15);}:root[data-theme="dark"] .grp-fail{background:rgba(239,68,68,.13);}
-.col-sub{font-size:9px;font-weight:400;opacity:.65;display:block;font-style:normal;text-transform:none;letter-spacing:0;margin-top:1px;}
+.grp-hdr{font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;font-weight:800;padding:5px 8px;color:#fff;}
+.grp-gen{background:#2563eb;}
+.grp-trig{background:#059669;}
+.grp-fail{background:#dc2626;}
+.grp-spends{background:#c2680a;}
+.grp-cpl{background:#7c3aed;}
+.grid-trig thead tr:nth-child(1) th:first-child{background:#1e3a8a;color:#fff;vertical-align:bottom;}
+.grid-trig thead tr:nth-child(2) th{color:#fff;font-size:10px;font-weight:700;padding:4px 6px;text-align:center;letter-spacing:.03em;}
+.grid-trig thead tr:nth-child(2) th:nth-child(-n+4){background:#3b82f6;}
+.grid-trig thead tr:nth-child(2) th:nth-child(n+5):nth-child(-n+8){background:#10b981;}
+.grid-trig thead tr:nth-child(2) th:nth-child(n+9):nth-child(-n+12){background:#ef4444;}
+.grid-trig thead tr:nth-child(2) th:nth-child(13){background:#f59e0b;}
+.grid-trig thead tr:nth-child(2) th:nth-child(14){background:#8b5cf6;}
+.grid-trig thead tr:nth-child(2) th:nth-child(n+2):nth-child(-n+4),.grid-trig thead tr:nth-child(2) th:nth-child(n+6):nth-child(-n+8),.grid-trig thead tr:nth-child(2) th:nth-child(n+10):nth-child(-n+12){border-left:1px solid rgba(255,255,255,.3);}
+.grid-trig thead tr:nth-child(2) th:nth-child(5),.grid-trig thead tr:nth-child(2) th:nth-child(9),.grid-trig thead tr:nth-child(2) th:nth-child(13),.grid-trig thead tr:nth-child(2) th:nth-child(14){border-left:2px solid rgba(255,255,255,.5);}
+.grid-trig{font-size:11.5px;width:100%;}
+.grid-trig th,.grid-trig td{padding:3px 6px;}
+.grid-trig .date-cell{gap:0;}
+.grid-trig .date-main{font-size:11.5px;}
+.grid-trig .date-day{font-size:10px;}
+.grid-trig td:nth-child(2){border-left:2px solid #2563eb;}
+.grid-trig td:nth-child(3),.grid-trig td:nth-child(4),.grid-trig td:nth-child(5){border-left:1px dashed rgba(37,99,235,.3);}
+.grid-trig td:nth-child(6){border-left:2px solid #059669;}
+.grid-trig td:nth-child(7),.grid-trig td:nth-child(8),.grid-trig td:nth-child(9){border-left:1px dashed rgba(5,150,105,.3);}
+.grid-trig td:nth-child(10){border-left:2px solid #dc2626;}
+.grid-trig td:nth-child(11),.grid-trig td:nth-child(12),.grid-trig td:nth-child(13){border-left:1px dashed rgba(220,38,38,.3);}
+.grid-trig td:nth-child(14){border-left:2px solid #c2680a;}
+.grid-trig td:nth-child(15){border-left:2px solid #7c3aed;}
 .num-total{font-weight:700;}
 .grid-table th,.grid-table td{text-align:center;}
 .grid-table th:first-child,.grid-table td:first-child{text-align:left;}
@@ -363,19 +384,17 @@ select:disabled{opacity:.45;cursor:default;}
       <table class="grid-table grid-trig" id="trigTable">
         <thead>
           <tr>
-            <th rowspan="2" style="vertical-align:bottom;">Date</th>
+            <th rowspan="2" class="grp-hdr" style="background:#1e3a8a;vertical-align:bottom;">Date</th>
             <th colspan="4" class="grp-hdr grp-gen">Generation</th>
             <th colspan="4" class="grp-hdr grp-trig">Trigger</th>
-            <th colspan="4" class="grp-hdr grp-fail">Failure</th>
-            <th class="grp-hdr" style="vertical-align:bottom;">Spends</th>
-            <th class="grp-hdr" style="vertical-align:bottom;">Trigger CPL</th>
+            <th colspan="4" class="grp-hdr grp-fail">Failure %</th>
+            <th rowspan="2" class="grp-hdr grp-spends" style="vertical-align:bottom;">Spends</th>
+            <th rowspan="2" class="grp-hdr grp-cpl" style="vertical-align:bottom;">Trigger CPL</th>
           </tr>
           <tr>
             <th>Facebook</th><th>Organic</th><th>Cross Sell</th><th>Total</th>
             <th>Facebook</th><th>Organic</th><th>Cross Sell</th><th>Total</th>
-            <th>Facebook<small class="col-sub">1 &#8722; trig/gen</small></th><th>Organic</th><th>Cross Sell</th><th>Total</th>
-            <th>Facebook</th>
-            <th>Facebook<small class="col-sub">Spends / FB trig</small></th>
+            <th>Facebook</th><th>Organic</th><th>Cross Sell</th><th>Total</th>
           </tr>
         </thead>
         <tbody id="trigBody"></tbody>
@@ -1249,10 +1268,7 @@ let selMonthTrig='all',selOEMTrig='all',selModelsTrig=new Set();
 
 /* ─── THEME ─────────────────────────── */
 (function initTheme(){
-  const saved=localStorage.getItem('dcTheme');
-  const sysDark=window.matchMedia('(prefers-color-scheme:dark)').matches;
-  const theme=saved||(sysDark?'dark':'light');
-  document.documentElement.dataset.theme=theme;
+  document.documentElement.dataset.theme='light';
 })();
 function getCLModelFromAdSet(adset){
   const p=(adset||'').replace(/^CNB\|\|ClassicLegends_/,'').replace(/^ClassicLegends_/,'');
@@ -1805,13 +1821,13 @@ function renderTrigger(){
   if(!dates.length){document.getElementById('trigBody').innerHTML=`<tr><td colspan="15"><div class="empty-state"><div class="empty-icon">&#128219;</div><div class="empty-text">No trigger data for this filter.</div></div></td></tr>`;return;}
   const totG={fb:0,org:0,cross:0},totT={fb:0,org:0,cross:0};let totS=0;
   const n=v=>v?fI(v):'&#8212;';
+  const fp=(g,t)=>g>0?((g-t)/g*100).toFixed(1)+'%':'&#8212;';
   let html=dates.map(date=>{
     const gen=getDTCounts(date,DT_GEN,DT_GEN_M);
     const trig=getDTCounts(date,DT_TRIG,DT_TRIG_M);
-    const fail={fb:gen.fb-trig.fb,org:gen.org-trig.org,cross:gen.cross-trig.cross};
     const spends=getSpendsTrig(date);const cpl=trig.fb>0?spends/trig.fb:0;
     ['fb','org','cross'].forEach(s=>{totG[s]+=gen[s];totT[s]+=trig[s];});totS+=spends;
-    const gT=gen.fb+gen.org+gen.cross,tT=trig.fb+trig.org+trig.cross,fT=fail.fb+fail.org+fail.cross;
+    const gT=gen.fb+gen.org+gen.cross,tT=trig.fb+trig.org+trig.cross;
     const[y,m,d]=date.split('-').map(Number);const dt=new Date(y,m-1,d);
     const isW=dt.getDay()===0||dt.getDay()===6;
     const dd=String(d).padStart(2,'0')+' '+MONTHS_SHORT[m];const dn=DAYS[dt.getDay()];
@@ -1819,18 +1835,17 @@ function renderTrigger(){
       <td><div class="date-cell"><span class="date-main">${dd}</span><span class="date-day${isW?' weekend':''}">${dn}</span></div></td>
       <td class="num-leads">${n(gen.fb)}</td><td class="num-leads">${n(gen.org)}</td><td class="num-leads">${n(gen.cross)}</td><td class="num-leads num-total">${n(gT)}</td>
       <td class="num-leads">${n(trig.fb)}</td><td class="num-leads">${n(trig.org)}</td><td class="num-leads">${n(trig.cross)}</td><td class="num-leads num-total">${n(tT)}</td>
-      <td class="num-leakage">${n(fail.fb)}</td><td class="num-leakage">${n(fail.org)}</td><td class="num-leakage">${n(fail.cross)}</td><td class="num-leakage num-total">${n(fT)}</td>
+      <td class="num-leakage">${fp(gen.fb,trig.fb)}</td><td class="num-leakage">${fp(gen.org,trig.org)}</td><td class="num-leakage">${fp(gen.cross,trig.cross)}</td><td class="num-leakage num-total">${fp(gT,tT)}</td>
       <td class="num-spends">${spends?fMon(spends):'&#8212;'}</td><td class="num-spends">${cpl?fCPL(cpl):'&#8212;'}</td>
     </tr>`;
   }).join('');
-  const totFail={fb:totG.fb-totT.fb,org:totG.org-totT.org,cross:totG.cross-totT.cross};
-  const tgT=totG.fb+totG.org+totG.cross,ttT=totT.fb+totT.org+totT.cross,tfT=totFail.fb+totFail.org+totFail.cross;
+  const tgT=totG.fb+totG.org+totG.cross,ttT=totT.fb+totT.org+totT.cross;
   const totCpl=totT.fb>0?totS/totT.fb:0;
   html+=`<tr class="total-row">
     <td><span class="total-label">Total</span></td>
     <td class="num-leads">${fI(totG.fb)}</td><td class="num-leads">${fI(totG.org)}</td><td class="num-leads">${fI(totG.cross)}</td><td class="num-leads num-total">${fI(tgT)}</td>
     <td class="num-leads">${fI(totT.fb)}</td><td class="num-leads">${fI(totT.org)}</td><td class="num-leads">${fI(totT.cross)}</td><td class="num-leads num-total">${fI(ttT)}</td>
-    <td class="num-leakage">${fI(totFail.fb)}</td><td class="num-leakage">${fI(totFail.org)}</td><td class="num-leakage">${fI(totFail.cross)}</td><td class="num-leakage num-total">${fI(tfT)}</td>
+    <td class="num-leakage">${fp(totG.fb,totT.fb)}</td><td class="num-leakage">${fp(totG.org,totT.org)}</td><td class="num-leakage">${fp(totG.cross,totT.cross)}</td><td class="num-leakage num-total">${fp(tgT,ttT)}</td>
     <td class="num-spends">${fMon(totS)}</td><td class="num-spends">${totCpl?fCPL(totCpl):'&#8212;'}</td>
   </tr>`;
   document.getElementById('trigBody').innerHTML=html;
