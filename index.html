@@ -1257,6 +1257,7 @@ const OEM_COLORS = {
   "Classic Legends": {hex:"#8b5cf6", bg:"rgba(139,92,246,.12)"},
   "Mahindra":        {hex:"#d97706", bg:"rgba(217,119,6,.12)"},
   "Simple Energy":   {hex:"#6366f1", bg:"rgba(99,102,241,.12)"},
+  "Policy Bazzar":   {hex:"#16a34a", bg:"rgba(22,163,74,.12)"},
 };
 
 const PARTNER_TO_OEM_GROUP={'Spinny':'Spinny','Spinny Sell Car':'Spinny','Cars24':'Cars24','Cars24 (Sell Car)':'Cars24','Honda Bikes':'Honda','Policy Bazzar':'Policy Bazzar'};
@@ -1731,6 +1732,11 @@ function getActiveForMonthTrig(){
     if(selMonthTrig!=='all'&&!r[0].startsWith(selMonthTrig))return;
     const info=OEM_MAP[r[1]];if(info){oems.add(info.oem);camps.add(r[1]);}
   });
+  Object.keys(DT_GEN).forEach(k=>{
+    const sep=k.lastIndexOf('|');const date=k.substring(0,sep);const partner=k.substring(sep+1);
+    if(selMonthTrig!=='all'&&!date.startsWith(selMonthTrig))return;
+    const oem=PARTNER_TO_OEM_GROUP[partner];if(oem)oems.add(oem);
+  });
   return{oems,camps};
 }
 function buildOemTabsTrig(){
@@ -1740,6 +1746,11 @@ function buildOemTabsTrig(){
   let h=`<button class="oem-tab${isAll?' active':''}" data-oem="all" onclick="setOEMTrig('all')" ${isAll?'style="background:var(--accent);color:#fff;border-color:transparent;"':''}>All OEMs</button>`;
   OEM_ORDER.forEach(oem=>{
     if(!oems.has(oem))return;
+    const c=OEM_COLORS[oem]||{hex:'#888'};const isA=selOEMTrig===oem;
+    h+=`<button class="oem-tab${isA?' active':''}" data-oem="${oem}" onclick="setOEMTrig('${oem.replace(/'/g,"\\'")}') " style="${isA?`background:${c.hex};color:#fff;border-color:transparent;`:''}"><span class="oem-tab-dot" style="background:${c.hex}"></span>${oem}</button>`;
+  });
+  Object.keys(OEM_TO_DT_PARTNERS).forEach(oem=>{
+    if(OEM_ORDER.includes(oem)||!oems.has(oem))return;
     const c=OEM_COLORS[oem]||{hex:'#888'};const isA=selOEMTrig===oem;
     h+=`<button class="oem-tab${isA?' active':''}" data-oem="${oem}" onclick="setOEMTrig('${oem.replace(/'/g,"\\'")}') " style="${isA?`background:${c.hex};color:#fff;border-color:transparent;`:''}"><span class="oem-tab-dot" style="background:${c.hex}"></span>${oem}</button>`;
   });
