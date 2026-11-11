@@ -227,14 +227,14 @@ select:disabled{opacity:.45;cursor:default;}
 :root[data-theme="dark"] .grid-table th{color:var(--accent)!important;}
 .num-leakage{font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:600;color:var(--fg-2);}
 /* TRIGGER TABLE */
-.grp-hdr{font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;font-weight:800;padding:5px 8px;color:#fff;}
+.grp-hdr{font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;font-weight:800;padding:5px 8px;color:#000;}
 .grp-gen{background:#2563eb;}
 .grp-trig{background:#059669;}
 .grp-fail{background:#dc2626;}
 .grp-spends{background:#c2680a;}
 .grp-cpl{background:#7c3aed;}
 .grid-trig thead tr:nth-child(1) th:first-child{background:#1e3a8a;color:#fff;vertical-align:bottom;}
-.grid-trig thead tr:nth-child(2) th{color:#fff;font-size:10px;font-weight:700;padding:4px 6px;text-align:center;letter-spacing:.03em;}
+.grid-trig thead tr:nth-child(2) th{color:#000;font-size:10px;font-weight:700;padding:4px 6px;text-align:center;letter-spacing:.03em;}
 .grid-trig thead tr:nth-child(2) th:nth-child(-n+4){background:#3b82f6;}
 .grid-trig thead tr:nth-child(2) th:nth-child(n+5):nth-child(-n+8){background:#10b981;}
 .grid-trig thead tr:nth-child(2) th:nth-child(n+9):nth-child(-n+12){background:#ef4444;}
@@ -258,6 +258,25 @@ select:disabled{opacity:.45;cursor:default;}
 .num-total{font-weight:700;}
 .grid-table th,.grid-table td{text-align:center;}
 .grid-table th:first-child,.grid-table td:first-child{text-align:left;}
+/* LEAKAGE GRID — same visual vocabulary as trigger analysis */
+.grid-leak{font-size:11.5px;}
+.grid-leak th,.grid-leak td{padding:3px 6px;}
+.grid-leak .date-cell{gap:0;}
+.grid-leak .date-main{font-size:11.5px;}
+.grid-leak .date-day{font-size:10px;}
+.grid-leak th{font-size:10.5px!important;text-transform:uppercase;letter-spacing:.05em;font-weight:800!important;padding:5px 8px!important;color:#000!important;cursor:default;}
+.grid-leak th[data-col="date"]{background:#1e3a8a;color:#fff!important;}
+.grid-leak th[data-col="oem"],.grid-leak th[data-col="model"]{background:#374151;color:#fff!important;}
+.grid-leak th[data-col="leads"]{background:#2563eb;}
+.grid-leak th#dleadsColHdr{background:#059669;}
+.grid-leak th#leakageColHdr{background:#dc2626;}
+.grid-leak th[data-col="spends"]{background:#c2680a;}
+.grid-leak th[data-col="gcpl"]{background:#7c3aed;}
+.grid-leak th.sorted,.grid-leak th:hover{color:#000!important;}
+.grid-leak th[data-col="date"]:hover,.grid-leak th[data-col="date"].sorted{color:#fff!important;}
+.grid-leak th[data-col="oem"]:hover,.grid-leak th[data-col="oem"].sorted,.grid-leak th[data-col="model"]:hover,.grid-leak th[data-col="model"].sorted{color:#fff!important;}
+.grid-leak td{border-left:1px solid var(--border);}
+.grid-leak td:first-child{border-left:none;}
 </style>
 
 <header class="hdr">
@@ -333,7 +352,7 @@ select:disabled{opacity:.45;cursor:default;}
       <span class="tcard-count" id="tableCount">0 rows</span>
     </div>
     <div class="tscroll">
-      <table class="grid-table" id="dataTable">
+      <table class="grid-table grid-leak" id="dataTable">
         <thead><tr>
           <th data-col="date" class="sorted">Date <span class="sort-ico">▼</span></th>
           <th data-col="oem" id="oemColHdr">OEM <span class="sort-ico">↕</span></th>
