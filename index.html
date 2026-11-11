@@ -1361,7 +1361,8 @@ async function fetchDailyTrigger(){
       if(!PARTNER_TO_OEM_GROUP[partner])continue;
       const date=parseDTDate((row[iPush]||'').trim());
       if(!date)continue;
-      const srcType=src==='Facebook'?'fb':src==='NA'?'cross':'org';
+      const srcL=src.toLowerCase();
+      const srcType=srcL==='facebook'?'fb':(srcL==='na'||srcL==='cross sell')?'cross':'org';
       const isSuccess=iStatus!==-1&&(row[iStatus]||'').trim().toLowerCase()==='success';
       const pk=date+'|'+partner;
       if(!dtGen[pk])dtGen[pk]={fb:0,org:0,cross:0};
