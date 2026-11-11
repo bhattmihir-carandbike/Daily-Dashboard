@@ -1760,7 +1760,16 @@ function buildOemTabsTrig(){
 function getModelCampsTrig(){
   const{camps}=getActiveForMonthTrig();
   const pool=selOEMTrig==='all'?Object.keys(OEM_MAP):(OEM_TO_CAMPS[selOEMTrig]||[]);
-  return pool.filter(c=>camps.has(c));
+  const result=new Set(pool.filter(c=>camps.has(c)));
+  const dtPartners=selOEMTrig==='all'?Object.values(OEM_TO_DT_PARTNERS).flat():(OEM_TO_DT_PARTNERS[selOEMTrig]||[]);
+  dtPartners.forEach(p=>{
+    const hasData=Object.keys(DT_GEN).some(k=>{
+      const sep=k.lastIndexOf('|');
+      return k.substring(sep+1)===p&&(selMonthTrig==='all'||k.substring(0,sep).startsWith(selMonthTrig));
+    });
+    if(hasData)result.add(p);
+  });
+  return[...result];
 }
 function buildModelDropTrig(){
   const camps=getModelCampsTrig();const drop=document.getElementById('modelDropTrig');if(!drop)return;
@@ -1796,7 +1805,7 @@ function setMonthTrig(){selMonthTrig=document.getElementById('monthSelTrig').val
 function clearMonthTrig(){selMonthTrig='all';document.getElementById('monthSelTrig').value='all';buildOemTabsTrig();buildModelDropTrig();renderTrigger();}
 function setOEMTrig(oem){
   selOEMTrig=oem;
-  if(selModelsTrig.size>0){const ov=[...selModelsTrig].map(c=>OEM_MAP[c]?.oem);if(oem!=='all'&&!ov.every(o=>o===oem))selModelsTrig.clear();}
+  if(selModelsTrig.size>0){const ov=[...selModelsTrig].map(c=>OEM_MAP[c]?.oem||PARTNER_TO_OEM_GROUP[c]);if(oem!=='all'&&!ov.every(o=>o===oem))selModelsTrig.clear();}
   document.querySelectorAll('#oemTabsTrig .oem-tab').forEach(t=>{
     const on=t.dataset.oem===oem;t.classList.toggle('active',on);
     if(on&&oem!=='all'){const c=OEM_COLORS[oem];if(c){t.style.background=c.hex;t.style.color='#fff';t.style.borderColor='transparent';}}
