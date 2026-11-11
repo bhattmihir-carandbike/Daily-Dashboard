@@ -226,6 +226,15 @@ select:disabled{opacity:.45;cursor:default;}
 :root[data-theme="dark"] .num-leads,:root[data-theme="dark"] .num-leakage{color:#fff!important;}
 :root[data-theme="dark"] .grid-table th{color:var(--accent)!important;}
 .num-leakage{font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:600;color:var(--fg-2);}
+/* TRIGGER TABLE */
+.grp-hdr{font-size:11px;text-transform:uppercase;letter-spacing:.04em;font-weight:700;padding-top:5px;padding-bottom:5px;}
+.grp-gen{background:var(--accent-soft);color:var(--accent);}
+.grp-trig{background:rgba(16,185,129,.1);color:#10b981;}
+.grp-fail{background:rgba(239,68,68,.08);color:#ef4444;}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]) .grp-trig{background:rgba(16,185,129,.15);}:root:not([data-theme="light"]) .grp-fail{background:rgba(239,68,68,.13);}}
+:root[data-theme="dark"] .grp-trig{background:rgba(16,185,129,.15);}:root[data-theme="dark"] .grp-fail{background:rgba(239,68,68,.13);}
+.col-sub{font-size:9px;font-weight:400;opacity:.65;display:block;font-style:normal;text-transform:none;letter-spacing:0;margin-top:1px;}
+.num-total{font-weight:700;}
 .grid-table th,.grid-table td{text-align:center;}
 .grid-table th:first-child,.grid-table td:first-child{text-align:left;}
 </style>
@@ -251,6 +260,7 @@ select:disabled{opacity:.45;cursor:default;}
 
 <nav class="view-nav" id="viewNav">
   <button class="view-tab active" id="vtLeakage" onclick="switchView('leakage')">Leakage Analysis</button>
+  <button class="view-tab" id="vtTrigger" onclick="switchView('trigger')">Trigger Analysis</button>
 </nav>
 
 <main class="main" id="view-leakage">
@@ -324,6 +334,55 @@ select:disabled{opacity:.45;cursor:default;}
     </div>
   </div>
 </main>
+
+<div id="view-trigger" class="main" style="display:none">
+  <div class="month-row">
+    <div class="filter-group">
+      <span class="filter-label">Month</span>
+      <select id="monthSelTrig" onchange="setMonthTrig()"><option value="all">All Months</option></select>
+    </div>
+  </div>
+  <div class="oem-tabs" id="oemTabsTrig"></div>
+  <div class="filter-bar">
+    <div class="model-multi" id="modelMultiTrig">
+      <button class="model-multi-btn" id="modelMultiBtnTrig" onclick="toggleModelDropTrig()">
+        <span class="model-multi-label-inner">Model</span>
+        <span id="modelMultiLabelTrig">All Models</span>
+        <span class="model-multi-arrow">&#9662;</span>
+      </button>
+      <div class="model-drop" id="modelDropTrig" hidden></div>
+    </div>
+    <div class="active-chips" id="activeChipsTrig"></div>
+  </div>
+  <div class="tcard">
+    <div class="tcard-hdr">
+      <span class="tcard-title" id="trigTableTitle">Trigger Analysis</span>
+      <span class="tcard-count" id="trigTableCount">0 rows</span>
+    </div>
+    <div class="tscroll">
+      <table class="grid-table grid-trig" id="trigTable">
+        <thead>
+          <tr>
+            <th rowspan="2" style="vertical-align:bottom;">Date</th>
+            <th colspan="4" class="grp-hdr grp-gen">Generation</th>
+            <th colspan="4" class="grp-hdr grp-trig">Trigger</th>
+            <th colspan="4" class="grp-hdr grp-fail">Failure</th>
+            <th class="grp-hdr" style="vertical-align:bottom;">Spends</th>
+            <th class="grp-hdr" style="vertical-align:bottom;">Trigger CPL</th>
+          </tr>
+          <tr>
+            <th>Facebook</th><th>Organic</th><th>Cross Sell</th><th>Total</th>
+            <th>Facebook</th><th>Organic</th><th>Cross Sell</th><th>Total</th>
+            <th>Facebook<small class="col-sub">1 &#8722; trig/gen</small></th><th>Organic</th><th>Cross Sell</th><th>Total</th>
+            <th>Facebook</th>
+            <th>Facebook<small class="col-sub">Spends / FB trig</small></th>
+          </tr>
+        </thead>
+        <tbody id="trigBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
 
 <script>
 const RAW = [
@@ -1184,6 +1243,9 @@ let selMonth=_latestMonth||'all',selOEM='all';
 let selModels=new Set(); // empty = all models
 let FB_LEADS={};let FB_MODEL_LEADS={};
 let sortCol='date',sortDir='asc',groupByDate=true,maxGcpl=100;
+let DT_GEN={},DT_TRIG={},DT_GEN_M={},DT_TRIG_M={};
+let activeView='leakage';
+let selMonthTrig='all',selOEMTrig='all',selModelsTrig=new Set();
 
 /* ─── THEME ─────────────────────────── */
 (function initTheme(){
@@ -1206,10 +1268,9 @@ function rebuildMonthOptions(rows){
   const months=new Set();
   rows.forEach(r=>{ if(r[0])months.add(r[0].slice(0,7)); });
   const sorted=[...months].sort((a,b)=>b.localeCompare(a));
-  const sel=document.getElementById('monthSel');
   const MNAMES=["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-  sel.innerHTML='<option value="all">All Months</option>'+
-    sorted.map(m=>`<option value="${m}">${MNAMES[+m.split('-')[1]]} ${m.split('-')[0]}</option>`).join('');
+  const opts='<option value="all">All Months</option>'+sorted.map(m=>`<option value="${m}">${MNAMES[+m.split('-')[1]]} ${m.split('-')[0]}</option>`).join('');
+  ['monthSel','monthSelTrig'].forEach(id=>{const s=document.getElementById(id);if(s)s.innerHTML=opts;});
 }
 function _applyData(agg){
   if(!Object.keys(agg).length){console.warn('fetchFromSheets: no rows matched, keeping existing data');return;}
@@ -1218,8 +1279,12 @@ function _applyData(agg){
   rebuildMonthOptions(RAW);
   const latest=RAW.reduce((mx,r)=>r[0]>mx?r[0]:mx,'').slice(0,7)||'all';
   selMonth=latest;selOEM='all';selModels.clear();sortCol='date';sortDir='asc';groupByDate=true;
+  selMonthTrig=latest;selOEMTrig='all';selModelsTrig.clear();
   document.getElementById('monthSel').value=latest;
+  const mst=document.getElementById('monthSelTrig');if(mst)mst.value=latest;
   buildOemTabs();buildModelDrop();updateModelLabel();render();
+  buildOemTabsTrig();buildModelDropTrig();updateModelLabelTrig();
+  if(activeView==='trigger')renderTrigger();
   document.querySelectorAll('.grid-table th').forEach(h=>{const on=h.dataset.col===sortCol;h.classList.toggle('sorted',on);const ico=h.querySelector('.sort-ico');if(ico)ico.textContent=on?(sortDir==='asc'?'▲':'▼'):'↕';});
 }
 function parseCSVText(text){
@@ -1237,7 +1302,7 @@ async function fetchDailyTrigger(){
   try{
     const mLU={};
     Object.entries(OEM_MAP).forEach(([ck,info])=>{
-      const n=(info.model||'').toLowerCase().replace(/[\s''\-\(\)]/g,'');
+      const n=(info.model||'').toLowerCase().replace(/[\s'' \-\(\)]/g,'');
       if(n){if(!mLU[n])mLU[n]=[];mLU[n].push(ck);}
     });
     const resp=await fetch('https://docs.google.com/spreadsheets/d/1KTfrFucSwkstyBJjWrO-gLaxP8yGvuhqADzuUjyc5EI/export?format=csv&gid=2015909339');
@@ -1250,26 +1315,48 @@ async function fetchDailyTrigger(){
     const iSource=hdr.findIndex(h=>h.includes('source'));
     const iPush=hdr.findIndex(h=>h.includes('push date'));
     const iModel=hdr.findIndex(h=>h==='model'||(h.includes('model')&&!h.includes('variant')&&!h.includes('form')));
+    const iStatus=hdr.findIndex(h=>h==='status'||h==='lead status'||h.includes('status'));
     if([iPartner,iSource,iPush].some(i=>i===-1)){console.warn('DailyTrigger: missing cols');return;}
     const nb={},nbM={};
+    const dtGen={},dtTrig={},dtGenM={},dtTrigM={};
     for(let i=1;i<rows.length;i++){
       const row=rows[i];
-      if((row[iSource]||'').trim()!=='Facebook')continue;
+      const src=(row[iSource]||'').trim();
       const partner=(row[iPartner]||'').trim();
       if(!PARTNER_TO_OEM_GROUP[partner])continue;
       const date=parseDTDate((row[iPush]||'').trim());
       if(!date)continue;
+      const srcType=src==='Facebook'?'fb':src==='NA'?'cross':'org';
+      const isSuccess=iStatus!==-1&&(row[iStatus]||'').trim().toLowerCase()==='success';
       const pk=date+'|'+partner;
-      nb[pk]=(nb[pk]||0)+1;
+      if(!dtGen[pk])dtGen[pk]={fb:0,org:0,cross:0};
+      dtGen[pk][srcType]++;
+      if(isSuccess){if(!dtTrig[pk])dtTrig[pk]={fb:0,org:0,cross:0};dtTrig[pk][srcType]++;}
+      const campKeys=new Set();
       const ck2=DT_PARTNER_TO_CAMP[partner];
-      if(ck2){const mk2=date+'|'+ck2;nbM[mk2]=(nbM[mk2]||0)+1;}
+      if(ck2)campKeys.add(ck2);
       if(iModel!==-1){
-        const dtMod=(row[iModel]||'').trim().toLowerCase().replace(/[\s''\-\(\)]/g,'');
-        (mLU[dtMod]||[]).forEach(ck=>{const mk=date+'|'+ck;nbM[mk]=(nbM[mk]||0)+1;});
+        const dtMod=(row[iModel]||'').trim().toLowerCase().replace(/[\s'' \-\(\)]/g,'');
+        (mLU[dtMod]||[]).forEach(ck=>campKeys.add(ck));
+      }
+      campKeys.forEach(ck=>{
+        const mk=date+'|'+ck;
+        if(!dtGenM[mk])dtGenM[mk]={fb:0,org:0,cross:0};
+        dtGenM[mk][srcType]++;
+        if(isSuccess){if(!dtTrigM[mk])dtTrigM[mk]={fb:0,org:0,cross:0};dtTrigM[mk][srcType]++;}
+      });
+      if(src==='Facebook'){
+        nb[pk]=(nb[pk]||0)+1;
+        if(ck2){const mk2=date+'|'+ck2;nbM[mk2]=(nbM[mk2]||0)+1;}
+        if(iModel!==-1){
+          const dtMod=(row[iModel]||'').trim().toLowerCase().replace(/[\s'' \-\(\)]/g,'');
+          (mLU[dtMod]||[]).forEach(ck=>{const mk=date+'|'+ck;nbM[mk]=(nbM[mk]||0)+1;});
+        }
       }
     }
     FB_LEADS=nb;FB_MODEL_LEADS=nbM;
-    console.log('DailyTrigger:',Object.keys(nb).length,'partner-date,',Object.keys(nbM).length,'model-date keys');
+    DT_GEN=dtGen;DT_TRIG=dtTrig;DT_GEN_M=dtGenM;DT_TRIG_M=dtTrigM;
+    console.log('DailyTrigger: gen-partner:',Object.keys(dtGen).length,'trig-partner:',Object.keys(dtTrig).length);
   }catch(e){console.warn('DailyTrigger:',e.message);}
 }
 async function fetchFromSheets(){
@@ -1599,7 +1686,169 @@ function filterModel(camp,oem){if(selOEM!==oem)setOEM(oem);selModels.clear();sel
 function clearMonth(){selMonth='all';document.getElementById('monthSel').value='all';render();}
 function clearModel(){clearModels();}
 function setGroup(g){groupByDate=g;document.getElementById('btnDetail').classList.toggle('active',!g);document.getElementById('btnGroup').classList.toggle('active',g);render();}
-function switchView(v){document.querySelectorAll('.view-tab').forEach(b=>b.classList.remove('active'));const btn=document.getElementById('vt'+v.charAt(0).toUpperCase()+v.slice(1));if(btn)btn.classList.add('active');}
+
+/* ─── TRIGGER ANALYSIS FILTER ─────────────────────── */
+function getActiveForMonthTrig(){
+  const oems=new Set(),camps=new Set();
+  RAW.forEach(r=>{
+    if(selMonthTrig!=='all'&&!r[0].startsWith(selMonthTrig))return;
+    const info=OEM_MAP[r[1]];if(info){oems.add(info.oem);camps.add(r[1]);}
+  });
+  return{oems,camps};
+}
+function buildOemTabsTrig(){
+  const w=document.getElementById('oemTabsTrig');if(!w)return;
+  const{oems}=getActiveForMonthTrig();
+  const isAll=selOEMTrig==='all';
+  let h=`<button class="oem-tab${isAll?' active':''}" data-oem="all" onclick="setOEMTrig('all')" ${isAll?'style="background:var(--accent);color:#fff;border-color:transparent;"':''}>All OEMs</button>`;
+  OEM_ORDER.forEach(oem=>{
+    if(!oems.has(oem))return;
+    const c=OEM_COLORS[oem]||{hex:'#888'};const isA=selOEMTrig===oem;
+    h+=`<button class="oem-tab${isA?' active':''}" data-oem="${oem}" onclick="setOEMTrig('${oem.replace(/'/g,"\\'")}') " style="${isA?`background:${c.hex};color:#fff;border-color:transparent;`:''}"><span class="oem-tab-dot" style="background:${c.hex}"></span>${oem}</button>`;
+  });
+  w.innerHTML=h;
+  if(selOEMTrig!=='all'&&!oems.has(selOEMTrig))selOEMTrig='all';
+}
+function getModelCampsTrig(){
+  const{camps}=getActiveForMonthTrig();
+  const pool=selOEMTrig==='all'?Object.keys(OEM_MAP):(OEM_TO_CAMPS[selOEMTrig]||[]);
+  return pool.filter(c=>camps.has(c));
+}
+function buildModelDropTrig(){
+  const camps=getModelCampsTrig();const drop=document.getElementById('modelDropTrig');if(!drop)return;
+  if(!camps.length){drop.innerHTML='<div style="padding:8px 10px;color:var(--fg-3);font-size:12px;">No models</div>';return;}
+  let h=`<div class="model-drop-all"><button class="model-drop-all-btn" onclick="clearModelsTrig()">Clear all</button></div>`;
+  h+=camps.map(camp=>{const info=OEM_MAP[camp];const sel=selModelsTrig.has(camp);
+    return`<button class="model-opt${sel?' sel':''}" onclick="toggleModelOptTrig('${camp.replace(/'/g,"\\'")}') " data-camp="${camp}">
+      <span class="model-opt-dot" style="background:${info?.hex||'#888'}"></span>${info?.model||camp}
+      <span class="model-check">${sel?'&#10003;':''}</span></button>`;
+  }).join('');
+  drop.innerHTML=h;
+}
+function updateModelLabelTrig(){
+  const el=document.getElementById('modelMultiLabelTrig');if(!el)return;
+  if(selModelsTrig.size===0){el.innerHTML='All Models';return;}
+  const names=[...selModelsTrig].map(c=>OEM_MAP[c]?.model||c);
+  el.innerHTML=selModelsTrig.size===1?names[0]:`<span class="model-badge-count">${selModelsTrig.size}</span> Models`;
+}
+function toggleModelDropTrig(){
+  const drop=document.getElementById('modelDropTrig');const btn=document.getElementById('modelMultiBtnTrig');
+  const willOpen=drop.hidden;
+  if(willOpen){buildModelDropTrig();drop.hidden=false;btn.classList.add('open');}
+  else{drop.hidden=true;btn.classList.remove('open');}
+}
+function toggleModelOptTrig(camp){
+  if(selModelsTrig.has(camp))selModelsTrig.delete(camp);else selModelsTrig.add(camp);
+  const avail=new Set(getModelCampsTrig());
+  [...selModelsTrig].forEach(c=>{if(!avail.has(c))selModelsTrig.delete(c);});
+  buildModelDropTrig();updateModelLabelTrig();renderTrigger();
+}
+function clearModelsTrig(){selModelsTrig.clear();buildModelDropTrig();updateModelLabelTrig();renderTrigger();}
+function setMonthTrig(){selMonthTrig=document.getElementById('monthSelTrig').value;buildOemTabsTrig();buildModelDropTrig();renderTrigger();}
+function clearMonthTrig(){selMonthTrig='all';document.getElementById('monthSelTrig').value='all';buildOemTabsTrig();buildModelDropTrig();renderTrigger();}
+function setOEMTrig(oem){
+  selOEMTrig=oem;
+  if(selModelsTrig.size>0){const ov=[...selModelsTrig].map(c=>OEM_MAP[c]?.oem);if(oem!=='all'&&!ov.every(o=>o===oem))selModelsTrig.clear();}
+  document.querySelectorAll('#oemTabsTrig .oem-tab').forEach(t=>{
+    const on=t.dataset.oem===oem;t.classList.toggle('active',on);
+    if(on&&oem!=='all'){const c=OEM_COLORS[oem];if(c){t.style.background=c.hex;t.style.color='#fff';t.style.borderColor='transparent';}}
+    else if(on){t.style.background='var(--accent)';t.style.color='#fff';t.style.borderColor='transparent';}
+    else{t.style.background='';t.style.color='';t.style.borderColor='';}
+  });
+  buildModelDropTrig();updateModelLabelTrig();renderTrigger();
+}
+
+/* ─── TRIGGER DATA HELPERS ─────────────────────── */
+function getDTCounts(date,genStore,storeM){
+  const tot={fb:0,org:0,cross:0};
+  if(selModelsTrig.size>0){
+    selModelsTrig.forEach(camp=>{const v=storeM[date+'|'+camp];if(v){tot.fb+=v.fb||0;tot.org+=v.org||0;tot.cross+=v.cross||0;}});
+    return tot;
+  }
+  const pp=selOEMTrig==='all'?Object.values(OEM_TO_DT_PARTNERS).flat():(OEM_TO_DT_PARTNERS[selOEMTrig]||[]);
+  pp.forEach(p=>{const v=genStore[date+'|'+p];if(v){tot.fb+=v.fb||0;tot.org+=v.org||0;tot.cross+=v.cross||0;}});
+  return tot;
+}
+function getSpendsTrig(date){
+  return RAW.filter(r=>{
+    if(r[0]!==date)return false;
+    const info=OEM_MAP[r[1]];
+    if(!info)return selOEMTrig==='all'&&selModelsTrig.size===0;
+    if(selOEMTrig!=='all'&&info.oem!==selOEMTrig)return false;
+    if(selModelsTrig.size>0&&!selModelsTrig.has(r[1]))return false;
+    return true;
+  }).reduce((s,r)=>s+r[3],0);
+}
+
+/* ─── TRIGGER RENDER ─────────────────────── */
+function renderTrigger(){
+  const mLabel=(!selMonthTrig||selMonthTrig==='all')?'All time':(MONTHS_SHORT[+selMonthTrig.split('-')[1]]||'')+' '+selMonthTrig.split('-')[0];
+  document.getElementById('trigTableTitle').textContent='Trigger Analysis — '+mLabel;
+  let ch='';
+  if(selMonthTrig!=='all')ch+=`<button class="chip" onclick="clearMonthTrig()">&#128197; ${MONTHS_SHORT[+selMonthTrig.split('-')[1]]+' '+selMonthTrig.split('-')[0]}<em class="chip-x">&#10005;</em></button>`;
+  if(selModelsTrig.size>0){[...selModelsTrig].forEach(camp=>{const info=OEM_MAP[camp];
+    ch+=`<button class="chip" style="background:${info?.hex||'#888'}15;border-color:${info?.hex||'#888'}40;color:${info?.hex||'#888'};" onclick="toggleModelOptTrig('${camp.replace(/'/g,"\\'")}')">
+      <span style="width:7px;height:7px;border-radius:50%;background:${info?.hex||'#888'};display:inline-block;"></span>
+      ${info?.model||camp}<em class="chip-x" style="background:${info?.hex||'#888'}20;">&#10005;</em></button>`;});}
+  document.getElementById('activeChipsTrig').innerHTML=ch;
+  const dateSet=new Set();
+  if(selModelsTrig.size>0){
+    Object.keys(DT_GEN_M).forEach(k=>{const sep=k.lastIndexOf('|');const date=k.substring(0,sep);const camp=k.substring(sep+1);
+      if(!selModelsTrig.has(camp))return;if(selMonthTrig!=='all'&&!date.startsWith(selMonthTrig))return;dateSet.add(date);});
+  }else{
+    const pp=selOEMTrig==='all'?Object.values(OEM_TO_DT_PARTNERS).flat():(OEM_TO_DT_PARTNERS[selOEMTrig]||[]);
+    Object.keys(DT_GEN).forEach(k=>{const sep=k.lastIndexOf('|');const date=k.substring(0,sep);const partner=k.substring(sep+1);
+      if(!pp.includes(partner))return;if(selMonthTrig!=='all'&&!date.startsWith(selMonthTrig))return;dateSet.add(date);});
+  }
+  const dates=[...dateSet].sort();
+  document.getElementById('trigTableCount').textContent=dates.length+' rows';
+  if(!dates.length){document.getElementById('trigBody').innerHTML=`<tr><td colspan="15"><div class="empty-state"><div class="empty-icon">&#128219;</div><div class="empty-text">No trigger data for this filter.</div></div></td></tr>`;return;}
+  const totG={fb:0,org:0,cross:0},totT={fb:0,org:0,cross:0};let totS=0;
+  const n=v=>v?fI(v):'&#8212;';
+  let html=dates.map(date=>{
+    const gen=getDTCounts(date,DT_GEN,DT_GEN_M);
+    const trig=getDTCounts(date,DT_TRIG,DT_TRIG_M);
+    const fail={fb:gen.fb-trig.fb,org:gen.org-trig.org,cross:gen.cross-trig.cross};
+    const spends=getSpendsTrig(date);const cpl=trig.fb>0?spends/trig.fb:0;
+    ['fb','org','cross'].forEach(s=>{totG[s]+=gen[s];totT[s]+=trig[s];});totS+=spends;
+    const gT=gen.fb+gen.org+gen.cross,tT=trig.fb+trig.org+trig.cross,fT=fail.fb+fail.org+fail.cross;
+    const[y,m,d]=date.split('-').map(Number);const dt=new Date(y,m-1,d);
+    const isW=dt.getDay()===0||dt.getDay()===6;
+    const dd=String(d).padStart(2,'0')+' '+MONTHS_SHORT[m];const dn=DAYS[dt.getDay()];
+    return`<tr>
+      <td><div class="date-cell"><span class="date-main">${dd}</span><span class="date-day${isW?' weekend':''}">${dn}</span></div></td>
+      <td class="num-leads">${n(gen.fb)}</td><td class="num-leads">${n(gen.org)}</td><td class="num-leads">${n(gen.cross)}</td><td class="num-leads num-total">${n(gT)}</td>
+      <td class="num-leads">${n(trig.fb)}</td><td class="num-leads">${n(trig.org)}</td><td class="num-leads">${n(trig.cross)}</td><td class="num-leads num-total">${n(tT)}</td>
+      <td class="num-leakage">${n(fail.fb)}</td><td class="num-leakage">${n(fail.org)}</td><td class="num-leakage">${n(fail.cross)}</td><td class="num-leakage num-total">${n(fT)}</td>
+      <td class="num-spends">${spends?fMon(spends):'&#8212;'}</td><td class="num-spends">${cpl?fCPL(cpl):'&#8212;'}</td>
+    </tr>`;
+  }).join('');
+  const totFail={fb:totG.fb-totT.fb,org:totG.org-totT.org,cross:totG.cross-totT.cross};
+  const tgT=totG.fb+totG.org+totG.cross,ttT=totT.fb+totT.org+totT.cross,tfT=totFail.fb+totFail.org+totFail.cross;
+  const totCpl=totT.fb>0?totS/totT.fb:0;
+  html+=`<tr class="total-row">
+    <td><span class="total-label">Total</span></td>
+    <td class="num-leads">${fI(totG.fb)}</td><td class="num-leads">${fI(totG.org)}</td><td class="num-leads">${fI(totG.cross)}</td><td class="num-leads num-total">${fI(tgT)}</td>
+    <td class="num-leads">${fI(totT.fb)}</td><td class="num-leads">${fI(totT.org)}</td><td class="num-leads">${fI(totT.cross)}</td><td class="num-leads num-total">${fI(ttT)}</td>
+    <td class="num-leakage">${fI(totFail.fb)}</td><td class="num-leakage">${fI(totFail.org)}</td><td class="num-leakage">${fI(totFail.cross)}</td><td class="num-leakage num-total">${fI(tfT)}</td>
+    <td class="num-spends">${fMon(totS)}</td><td class="num-spends">${totCpl?fCPL(totCpl):'&#8212;'}</td>
+  </tr>`;
+  document.getElementById('trigBody').innerHTML=html;
+}
+document.addEventListener('click',e=>{
+  const m=document.getElementById('modelMultiTrig');
+  if(m&&!m.contains(e.target)){const drop=document.getElementById('modelDropTrig');const btn=document.getElementById('modelMultiBtnTrig');if(drop){drop.hidden=true;if(btn)btn.classList.remove('open');}}
+});
+
+function switchView(v){
+  activeView=v;
+  document.querySelectorAll('.view-tab').forEach(b=>b.classList.remove('active'));
+  const btn=document.getElementById('vt'+v.charAt(0).toUpperCase()+v.slice(1));
+  if(btn)btn.classList.add('active');
+  document.getElementById('view-leakage').style.display=v==='leakage'?'':'none';
+  document.getElementById('view-trigger').style.display=v==='trigger'?'':'none';
+  if(v==='trigger'){buildOemTabsTrig();buildModelDropTrig();renderTrigger();}
+}
 
 document.querySelectorAll('.grid-table th[data-col]').forEach(th=>{
   th.addEventListener('click',()=>{
