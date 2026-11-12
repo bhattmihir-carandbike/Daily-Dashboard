@@ -39,8 +39,8 @@ body{background:var(--bg);color:var(--fg);font-size:15px;line-height:1.5;font-fa
   padding-block:0;min-height:100%;}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:#0b1040;}
 
-.hdr{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;
-  background:linear-gradient(135deg,#0b1040 0%,#1a2580 50%,#2436b0 100%);
+.sticky-band{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;}
+.hdr{background:linear-gradient(135deg,#0b1040 0%,#1a2580 50%,#2436b0 100%);
   margin-left:calc(-1*max(16px,env(safe-area-inset-left,0px)));
   margin-right:calc(-1*max(16px,env(safe-area-inset-right,0px)));
   padding-left:max(24px,env(safe-area-inset-left,0px));
@@ -279,7 +279,7 @@ select:disabled{opacity:.45;cursor:default;}
 .grid-leak td:first-child{border-left:none;}
 </style>
 
-<header class="hdr">
+<div class="sticky-band"><header class="hdr">
   <div class="hdr-inner">
     <div class="hdr-brand">
       <div class="hdr-icon">📊</div>
@@ -297,11 +297,11 @@ select:disabled{opacity:.45;cursor:default;}
     </div>
   </div>
 </header>
-
 <nav class="view-nav" id="viewNav">
   <button class="view-tab active" id="vtLeakage" onclick="switchView('leakage')">Leakage Analysis</button>
   <button class="view-tab" id="vtTrigger" onclick="switchView('trigger')">Trigger Analysis</button>
 </nav>
+</div>
 
 <main class="main" id="view-leakage">
   <div class="kpi-strip">
@@ -1763,6 +1763,10 @@ function getModelCampsTrig(){
   const result=new Set(pool.filter(c=>camps.has(c)));
   const dtPartners=selOEMTrig==='all'?Object.values(OEM_TO_DT_PARTNERS).flat():(OEM_TO_DT_PARTNERS[selOEMTrig]||[]);
   dtPartners.forEach(p=>{
+    if(result.has(p))return;
+    const campAlias=DT_PARTNER_TO_CAMP[p];
+    if(campAlias&&result.has(campAlias))return;
+    if(!campAlias){const oem=PARTNER_TO_OEM_GROUP[p];if(oem&&(OEM_TO_CAMPS[oem]||[]).some(c=>result.has(c)))return;}
     const hasData=Object.keys(DT_GEN).some(k=>{
       const sep=k.lastIndexOf('|');
       return k.substring(sep+1)===p&&(selMonthTrig==='all'||k.substring(0,sep).startsWith(selMonthTrig));
