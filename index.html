@@ -308,15 +308,16 @@ select:disabled{opacity:.45;cursor:default;}
 .grid-fail tbody tr{line-height:1.3;}
 .src-pct{display:block;font-size:9px;font-weight:500;color:var(--fg-3);line-height:1.2;}
 .grid-fail thead tr:nth-child(2) th{color:#fff;font-size:10px;font-weight:700;padding:4px 6px;text-align:center;}
-.grid-fail thead tr:nth-child(2) th:nth-child(-n+4){background:#ef4444;}
-.grid-fail thead tr:nth-child(2) th:nth-child(n+5){background:#f59e0b;}
+.grid-fail thead tr:nth-child(2) th:nth-child(-n+7){background:#ef4444;}
+.grid-fail thead tr:nth-child(2) th:nth-child(n+8){background:#f59e0b;}
 .grid-fail td:nth-child(2){border-left:2px solid #dc2626;}
-.grid-fail td:nth-child(3),.grid-fail td:nth-child(4),.grid-fail td:nth-child(5){border-left:1px dashed rgba(220,38,38,.3);}
-.grid-fail td:nth-child(6){border-left:2px solid #b91c1c;}
-.grid-fail td:nth-child(7){border-left:2px solid #d97706;}
-.grid-fail td:nth-child(8),.grid-fail td:nth-child(9),.grid-fail td:nth-child(10){border-left:1px dashed rgba(217,119,6,.3);}
-.grid-fail td:nth-child(11){border-left:2px solid #b45309;}
-.grid-fail td:nth-child(12){border-left:2px solid #374151;}
+.grid-fail td:nth-child(3),.grid-fail td:nth-child(4),.grid-fail td:nth-child(5),.grid-fail td:nth-child(6),.grid-fail td:nth-child(7),.grid-fail td:nth-child(8){border-left:1px dashed rgba(220,38,38,.3);}
+.grid-fail td:nth-child(9){border-left:2px solid #b91c1c;}
+.grid-fail td:nth-child(10){border-left:2px solid #d97706;}
+.grid-fail td:nth-child(11),.grid-fail td:nth-child(12),.grid-fail td:nth-child(13),.grid-fail td:nth-child(14),.grid-fail td:nth-child(15),.grid-fail td:nth-child(16){border-left:1px dashed rgba(217,119,6,.3);}
+.grid-fail td:nth-child(17){border-left:2px solid #b45309;}
+.grid-fail td:nth-child(18){border-left:2px solid #374151;}
+.grid-fail .src-pct-col{font-size:10px;color:var(--fg-3);font-weight:500;text-align:center;}
 </style>
 
 <div class="sticky-band"><header class="hdr">
@@ -485,15 +486,15 @@ select:disabled{opacity:.45;cursor:default;}
         <thead>
           <tr>
             <th rowspan="2" class="grp-hdr" style="background:#1e3a8a;vertical-align:bottom;">Date</th>
-            <th colspan="4" class="grp-hdr" style="background:#dc2626;color:#fff;">Failed Leads</th>
+            <th colspan="7" class="grp-hdr" style="background:#dc2626;color:#fff;">Failed Leads</th>
             <th rowspan="2" class="grp-hdr" style="background:#b91c1c;color:#fff;vertical-align:bottom;">Fail %</th>
-            <th colspan="4" class="grp-hdr" style="background:#d97706;color:#fff;">Duplicate Leads</th>
+            <th colspan="7" class="grp-hdr" style="background:#d97706;color:#fff;">Duplicate Leads</th>
             <th rowspan="2" class="grp-hdr" style="background:#b45309;color:#fff;vertical-align:bottom;">Dupl %</th>
             <th rowspan="2" class="grp-hdr" style="background:#374151;color:#fff;vertical-align:bottom;">Total</th>
           </tr>
           <tr>
-            <th>Facebook</th><th>Organic</th><th>Cross Sell</th><th>Total</th>
-            <th>Facebook</th><th>Organic</th><th>Cross Sell</th><th>Total</th>
+            <th>Facebook</th><th>FB%</th><th>Organic</th><th>Org%</th><th>Cross Sell</th><th>CS%</th><th>Total</th>
+            <th>Facebook</th><th>FB%</th><th>Organic</th><th>Org%</th><th>Cross Sell</th><th>CS%</th><th>Total</th>
           </tr>
         </thead>
         <tbody id="failTbody"></tbody>
@@ -2174,23 +2175,23 @@ function renderFailure(){
     const d2=new Date(date+'T00:00:00');const dy=DAYS[d2.getDay()];const isWe=d2.getDay()===0||d2.getDay()===6;
     const dm=date.split('-');const dLabel=`${+dm[2]} ${MONTHS_SHORT[+dm[1]]}`;
     const n=v=>v||'&#8212;';
-    const sp=(v,g)=>g>0?`<span class="src-pct">${(v/g*100).toFixed(1)}%</span>`:'';
+    const sp=(v,g)=>g>0?`${(v/g*100).toFixed(1)}%`:'&#8212;';
     rows+=`<tr class="${isWe?'weekend-row':''}">
       <td class="date-cell" style="white-space:nowrap;"><strong>${dLabel}</strong> <span class="day-label${isWe?' we':''}" style="font-weight:400;font-size:10px;color:var(--fg-3);">${dy}</span></td>
-      <td>${n(fail.fb)}${sp(fail.fb,gen.fb)}</td><td>${n(fail.org)}${sp(fail.org,gen.org)}</td><td>${n(fail.cross)}${sp(fail.cross,gen.cross)}</td><td class="num-total">${n(fT)}</td>
+      <td>${n(fail.fb)}</td><td class="src-pct-col">${sp(fail.fb,gen.fb)}</td><td>${n(fail.org)}</td><td class="src-pct-col">${sp(fail.org,gen.org)}</td><td>${n(fail.cross)}</td><td class="src-pct-col">${sp(fail.cross,gen.cross)}</td><td class="num-total">${n(fT)}</td>
       <td class="num-leakage">${gT>0?(fT/gT*100).toFixed(1)+'%':'&#8212;'}</td>
-      <td>${n(dupl.fb)}${sp(dupl.fb,gen.fb)}</td><td>${n(dupl.org)}${sp(dupl.org,gen.org)}</td><td>${n(dupl.cross)}${sp(dupl.cross,gen.cross)}</td><td class="num-total">${n(dT)}</td>
+      <td>${n(dupl.fb)}</td><td class="src-pct-col">${sp(dupl.fb,gen.fb)}</td><td>${n(dupl.org)}</td><td class="src-pct-col">${sp(dupl.org,gen.org)}</td><td>${n(dupl.cross)}</td><td class="src-pct-col">${sp(dupl.cross,gen.cross)}</td><td class="num-total">${n(dT)}</td>
       <td class="num-leakage">${gT>0?(dT/gT*100).toFixed(1)+'%':'&#8212;'}</td>
       <td class="num-total">${n(gT)}</td>
     </tr>`;
   });
   if(dates.length){
     const tgT=totR.fb+totR.org+totR.cross,tfT=totF.fb+totF.org+totF.cross,tdT=totD.fb+totD.org+totD.cross;
-    const tsp=(v,g)=>g>0?`<span class="src-pct">${(v/g*100).toFixed(1)}%</span>`:'';
+    const tsp=(v,g)=>g>0?`${(v/g*100).toFixed(1)}%`:'&#8212;';
     rows+=`<tr class="total-row"><td>TOTAL</td>
-      <td>${fI_(totF.fb)}${tsp(totF.fb,totR.fb)}</td><td>${fI_(totF.org)}${tsp(totF.org,totR.org)}</td><td>${fI_(totF.cross)}${tsp(totF.cross,totR.cross)}</td><td class="num-total">${fI_(tfT)}</td>
+      <td>${fI_(totF.fb)}</td><td class="src-pct-col">${tsp(totF.fb,totR.fb)}</td><td>${fI_(totF.org)}</td><td class="src-pct-col">${tsp(totF.org,totR.org)}</td><td>${fI_(totF.cross)}</td><td class="src-pct-col">${tsp(totF.cross,totR.cross)}</td><td class="num-total">${fI_(tfT)}</td>
       <td class="num-leakage">${tgT>0?(tfT/tgT*100).toFixed(1)+'%':'&#8212;'}</td>
-      <td>${fI_(totD.fb)}${tsp(totD.fb,totR.fb)}</td><td>${fI_(totD.org)}${tsp(totD.org,totR.org)}</td><td>${fI_(totD.cross)}${tsp(totD.cross,totR.cross)}</td><td class="num-total">${fI_(tdT)}</td>
+      <td>${fI_(totD.fb)}</td><td class="src-pct-col">${tsp(totD.fb,totR.fb)}</td><td>${fI_(totD.org)}</td><td class="src-pct-col">${tsp(totD.org,totR.org)}</td><td>${fI_(totD.cross)}</td><td class="src-pct-col">${tsp(totD.cross,totR.cross)}</td><td class="num-total">${fI_(tdT)}</td>
       <td class="num-leakage">${tgT>0?(tdT/tgT*100).toFixed(1)+'%':'&#8212;'}</td>
       <td class="num-total">${fI_(tgT)}</td>
     </tr>`;
