@@ -1921,51 +1921,19 @@ function clearModelsTrig(){selModelsTrig.clear();buildModelDropTrig();updateMode
 
 /* ─── FAILURE MODEL FILTER ─────────────────────── */
 function getModelCampsFail(){
-  const oems=new Set(),camps=new Set();
-  RAW.forEach(r=>{
-    if(selMonthFail!=='all'&&!r[0].startsWith(selMonthFail))return;
-    const info=OEM_MAP[r[1]];if(info){oems.add(info.oem);camps.add(r[1]);}
-  });
-  Object.keys(DT_GEN).forEach(k=>{
-    const sep=k.lastIndexOf('|');const date=k.substring(0,sep);const partner=k.substring(sep+1);
-    if(selMonthFail!=='all'&&!date.startsWith(selMonthFail))return;
-    const oem=PARTNER_TO_OEM_GROUP[partner];if(oem)oems.add(oem);
-  });
-  const pool=selOEMFail==='all'?Object.keys(OEM_MAP):(OEM_TO_CAMPS[selOEMFail]||[]);
-  const result=new Set(pool.filter(c=>camps.has(c)));
-  const dtPartners=selOEMFail==='all'?Object.values(OEM_TO_DT_PARTNERS).flat():(OEM_TO_DT_PARTNERS[selOEMFail]||[]);
-  dtPartners.forEach(p=>{
-    if(result.has(p))return;
-    const campAlias=DT_PARTNER_TO_CAMP[p];
-    if(campAlias&&result.has(campAlias))return;
-    if(!campAlias){const oem=PARTNER_TO_OEM_GROUP[p];if(oem&&(OEM_TO_CAMPS[oem]||[]).some(c=>result.has(c)))return;}
-    const hasData=Object.keys(DT_GEN).some(k=>{
-      const sep=k.lastIndexOf('|');
-      return k.substring(sep+1)===p&&(selMonthFail==='all'||k.substring(0,sep).startsWith(selMonthFail));
-    });
-    if(hasData)result.add(p);
-  });
-  return[...result];
-}
-function failCampsToPPs(campArr){
-  const result=new Set(),used=new Set();
-  campArr.forEach(camp=>{
-    if(!OEM_MAP[camp]){result.add(camp);return;}
-    const oem=OEM_MAP[camp].oem;const dps=OEM_TO_DT_PARTNERS[oem]||[];
-    if(dps.length===1){if(!used.has(dps[0])){result.add(dps[0]);used.add(dps[0]);}return;}
-    const direct=dps.filter(p=>DT_PARTNER_TO_CAMP[p]===camp);
-    if(direct.length)direct.forEach(p=>{if(!used.has(p)){result.add(p);used.add(p);}});
-    else dps.forEach(p=>{if(!used.has(p)){result.add(p);used.add(p);}});
-  });
-  return[...result];
+  const pp=selOEMFail==='all'?Object.values(OEM_TO_DT_PARTNERS).flat():(OEM_TO_DT_PARTNERS[selOEMFail]||[]);
+  return pp.filter(p=>Object.keys(DT_GEN).some(k=>{
+    const sep=k.lastIndexOf('|');
+    return k.substring(sep+1)===p&&(selMonthFail==='all'||k.substring(0,sep).startsWith(selMonthFail));
+  }));
 }
 function buildModelDropFail(){
   const camps=getModelCampsFail();const drop=document.getElementById('modelDropFail');if(!drop)return;
   if(!camps.length){drop.innerHTML='<div style="padding:8px 10px;color:var(--fg-3);font-size:12px;">No models</div>';return;}
   let h=`<div class="model-drop-all"><button class="model-drop-all-btn" onclick="clearModelsFail()">Clear all</button></div>`;
-  h+=camps.map(camp=>{const info=OEM_MAP[camp];const sel=selModelsFail.has(camp);
-    return`<button class="model-opt${sel?' sel':''}" onclick="toggleModelOptFail('${camp.replace(/'/g,"\\'")}') " data-camp="${camp}">
-      <span class="model-opt-dot" style="background:${info?.hex||'#888'}"></span>${info?.model||camp}
+  h+=camps.map(p=>{const oem=PARTNER_TO_OEM_GROUP[p];const c=OEM_COLORS[oem]||{hex:'#888'};const sel=selModelsFail.has(p);
+    return`<button class="model-opt${sel?' sel':''}" onclick="toggleModelOptFail('${p.replace(/'/g,"\\'")}') " data-camp="${p}">
+      <span class="model-opt-dot" style="background:${c.hex}"></span>${p}
       <span class="model-check">${sel?'&#10003;':''}</span></button>`;
   }).join('');
   drop.innerHTML=h;
@@ -1973,7 +1941,7 @@ function buildModelDropFail(){
 function updateModelLabelFail(){
   const el=document.getElementById('modelMultiLabelFail');if(!el)return;
   if(selModelsFail.size===0){el.innerHTML='All Models';return;}
-  const names=[...selModelsFail].map(c=>OEM_MAP[c]?.model||c);
+  const names=[...selModelsFail];
   el.innerHTML=selModelsFail.size===1?names[0]:`<span class="model-badge-count">${selModelsFail.size}</span> Models`;
 }
 function toggleModelDropFail(){
@@ -2139,7 +2107,7 @@ function setMonthFail(){selMonthFail=document.getElementById('monthSelFail').val
 function clearMonthFail(){selMonthFail='all';const s=document.getElementById('monthSelFail');if(s)s.value='all';buildOemTabsFail();buildModelDropFail();renderFailure();}
 function setOEMFail(oem){
   selOEMFail=oem;
-  if(selModelsFail.size>0){const ov=[...selModelsFail].map(c=>OEM_MAP[c]?.oem||PARTNER_TO_OEM_GROUP[c]);if(oem!=='all'&&!ov.every(o=>o===oem))selModelsFail.clear();}
+  if(selModelsFail.size>0){const ov=[...selModelsFail].map(p=>PARTNER_TO_OEM_GROUP[p]);if(oem!=='all'&&!ov.every(o=>o===oem))selModelsFail.clear();}
   document.querySelectorAll('#oemTabsFail .oem-tab').forEach(t=>{
     const on=t.dataset.oem===oem;t.classList.toggle('active',on);
     if(on&&oem!=='all'){const c=OEM_COLORS[oem];if(c){t.style.background=c.hex;t.style.color='#fff';t.style.borderColor='transparent';}}
@@ -2153,10 +2121,10 @@ function renderFailure(){
   const chips=document.getElementById('activeChipsFail');
   if(chips){let h='';
     if(selMonthFail&&selMonthFail!=='all')h+=`<span class="chip"><span>&#128197;</span> ${mLabel} <button onclick="clearMonthFail()">&#215;</button></span>`;
-    if(selModelsFail.size>0)[...selModelsFail].forEach(c=>{const name=OEM_MAP[c]?.model||c;h+=`<span class="chip"><span>&#128269;</span> ${name} <button onclick="toggleModelOptFail('${c.replace(/'/g,"\\'")}')">&#215;</button></span>`;});
+    if(selModelsFail.size>0)[...selModelsFail].forEach(p=>{h+=`<span class="chip"><span>&#128269;</span> ${p} <button onclick="toggleModelOptFail('${p.replace(/'/g,"\\'")}')">&#215;</button></span>`;});
     chips.innerHTML=h;}
   let pp=selOEMFail==='all'?Object.values(OEM_TO_DT_PARTNERS).flat():(OEM_TO_DT_PARTNERS[selOEMFail]||[]);
-  if(selModelsFail.size>0){const selPPs=new Set(failCampsToPPs([...selModelsFail]));pp=pp.filter(p=>selPPs.has(p));}
+  if(selModelsFail.size>0)pp=pp.filter(p=>selModelsFail.has(p));
   const dateSet=new Set();
   const srcFail={fb:0,org:0,cross:0},srcDupl={fb:0,org:0,cross:0},srcGen={fb:0,org:0,cross:0};
   const oemFail={},oemDupl={},oemGen={};
