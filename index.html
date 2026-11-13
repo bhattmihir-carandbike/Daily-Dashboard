@@ -1372,7 +1372,7 @@ let selModels=new Set(); // empty = all models
 let FB_LEADS={};let FB_MODEL_LEADS={};
 let sortCol='date',sortDir='asc',groupByDate=true,maxGcpl=100;
 let DT_GEN={},DT_TRIG={},DT_GEN_M={},DT_TRIG_M={};
-let DT_FAIL={},DT_DUPL={},DT_STATE={};
+let DT_FAIL={},DT_DUPL={},DT_STATE={},DT_FAIL_M={},DT_DUPL_M={};
 let activeView='leakage';
 let selMonthTrig='all',selOEMTrig='all',selModelsTrig=new Set();
 let selMonthFail='all',selOEMFail='all',selModelsFail=new Set();
@@ -1451,7 +1451,7 @@ async function fetchDailyTrigger(){
     if([iPartner,iSource,iPush].some(i=>i===-1)){console.warn('DailyTrigger: missing cols');return;}
     const nb={},nbM={};
     const dtGen={},dtTrig={},dtGenM={},dtTrigM={};
-    const dtFail={},dtDupl={},dtState={};
+    const dtFail={},dtDupl={},dtState={},dtFailM={},dtDuplM={};
     for(let i=1;i<rows.length;i++){
       const row=rows[i];
       const src=(row[iSource]||'').trim();
@@ -1490,6 +1490,8 @@ async function fetchDailyTrigger(){
         if(!dtGenM[mk])dtGenM[mk]={fb:0,org:0,cross:0};
         dtGenM[mk][srcType]++;
         if(isSuccess){if(!dtTrigM[mk])dtTrigM[mk]={fb:0,org:0,cross:0};dtTrigM[mk][srcType]++;}
+        if(isFail){if(!dtFailM[mk])dtFailM[mk]={fb:0,org:0,cross:0};dtFailM[mk][srcType]++;}
+        if(isDupl){if(!dtDuplM[mk])dtDuplM[mk]={fb:0,org:0,cross:0};dtDuplM[mk][srcType]++;}
       });
       if(src==='Facebook'){
         nb[pk]=(nb[pk]||0)+1;
@@ -1502,7 +1504,7 @@ async function fetchDailyTrigger(){
     }
     FB_LEADS=nb;FB_MODEL_LEADS=nbM;
     DT_GEN=dtGen;DT_TRIG=dtTrig;DT_GEN_M=dtGenM;DT_TRIG_M=dtTrigM;
-    DT_FAIL=dtFail;DT_DUPL=dtDupl;DT_STATE=dtState;
+    DT_FAIL=dtFail;DT_DUPL=dtDupl;DT_STATE=dtState;DT_FAIL_M=dtFailM;DT_DUPL_M=dtDuplM;
     const dtLatest=Object.keys(dtGen).reduce((mx,k)=>{const sep=k.lastIndexOf('|');const d=k.substring(0,sep);return d>mx?d:mx;},'').slice(0,7)||'all';
     if(dtLatest!=='all'){selMonthFail=dtLatest;const msf=document.getElementById('monthSelFail');if(msf)msf.value=dtLatest;}
     buildOemTabsFail();buildModelDropFail();updateModelLabelFail();
@@ -2023,6 +2025,21 @@ function getDTCounts(date,genStore,storeM){
   pp.forEach(p=>{const v=genStore[date+'|'+p];if(v){tot.fb+=v.fb||0;tot.org+=v.org||0;tot.cross+=v.cross||0;}});
   return tot;
 }
+function getFDMCounts(date,storeP,storeM){
+  const tot={fb:0,org:0,cross:0};
+  if(selModelsFail.size>0){
+    const dtUsed=new Set();
+    selModelsFail.forEach(camp=>{
+      let v=storeM[date+'|'+camp];
+      if(!v){const oem=OEM_MAP[camp]?.oem||PARTNER_TO_OEM_GROUP[camp];if(oem){const dps=OEM_TO_DT_PARTNERS[oem]||[];if(dps.length===1&&!dtUsed.has(dps[0])){v=storeM[date+'|'+dps[0]];if(v)dtUsed.add(dps[0]);}}}
+      if(v){tot.fb+=v.fb||0;tot.org+=v.org||0;tot.cross+=v.cross||0;}
+    });
+    return tot;
+  }
+  const pp=selOEMFail==='all'?Object.values(OEM_TO_DT_PARTNERS).flat():(OEM_TO_DT_PARTNERS[selOEMFail]||[]);
+  pp.forEach(p=>{const v=storeP[date+'|'+p];if(v){tot.fb+=v.fb||0;tot.org+=v.org||0;tot.cross+=v.cross||0;}});
+  return tot;
+}
 function getSpendsTrig(date){
   return RAW.filter(r=>{
     if(r[0]!==date)return false;
@@ -2160,21 +2177,47 @@ function renderFailure(){
   const dateSet=new Set();
   const srcFail={fb:0,org:0,cross:0},srcDupl={fb:0,org:0,cross:0},srcGen={fb:0,org:0,cross:0};
   const oemFail={},oemDupl={},oemGen={};
-  pp.forEach(p=>{
-    const oem=PARTNER_TO_OEM_GROUP[p]||p;
-    if(!oemFail[oem]){oemFail[oem]=0;oemDupl[oem]=0;oemGen[oem]=0;}
-    Object.keys(DT_GEN).forEach(k=>{
-      const sep=k.lastIndexOf('|');const date=k.substring(0,sep);const partner=k.substring(sep+1);
-      if(partner!==p)return;if(selMonthFail!=='all'&&!date.startsWith(selMonthFail))return;
-      dateSet.add(date);
-      const g=DT_GEN[k]||{fb:0,org:0,cross:0};const f=DT_FAIL[k]||{fb:0,org:0,cross:0};const d=DT_DUPL[k]||{fb:0,org:0,cross:0};
+  if(selModelsFail.size>0){
+    selModelsFail.forEach(camp=>{
+      Object.keys(DT_GEN_M).forEach(k=>{
+        const sep=k.lastIndexOf('|');const date=k.substring(0,sep);if(k.substring(sep+1)!==camp)return;
+        if(selMonthFail!=='all'&&!date.startsWith(selMonthFail))return;
+        dateSet.add(date);
+      });
+    });
+    if(dateSet.size===0){pp.forEach(p=>Object.keys(DT_GEN).forEach(k=>{const sep=k.lastIndexOf('|');const date=k.substring(0,sep);if(k.substring(sep+1)!==p)return;if(selMonthFail!=='all'&&!date.startsWith(selMonthFail))return;dateSet.add(date);}));}
+    [...dateSet].forEach(date=>{
+      const g=getFDMCounts(date,DT_GEN,DT_GEN_M);const f=getFDMCounts(date,DT_FAIL,DT_FAIL_M);const d=getFDMCounts(date,DT_DUPL,DT_DUPL_M);
       srcGen.fb+=g.fb;srcGen.org+=g.org;srcGen.cross+=g.cross;
       srcFail.fb+=f.fb;srcFail.org+=f.org;srcFail.cross+=f.cross;
       srcDupl.fb+=d.fb;srcDupl.org+=d.org;srcDupl.cross+=d.cross;
-      const gt=g.fb+g.org+g.cross,ft=f.fb+f.org+f.cross,dt=d.fb+d.org+d.cross;
-      oemGen[oem]+=gt;oemFail[oem]+=ft;oemDupl[oem]+=dt;
     });
-  });
+    selModelsFail.forEach(camp=>{
+      const oem=OEM_MAP[camp]?.oem||PARTNER_TO_OEM_GROUP[camp]||camp;
+      if(!oemFail[oem]){oemFail[oem]=0;oemDupl[oem]=0;oemGen[oem]=0;}
+      [...dateSet].forEach(date=>{
+        const mk=date+'|'+camp;
+        const g=DT_GEN_M[mk]||{fb:0,org:0,cross:0};const f=DT_FAIL_M[mk]||{fb:0,org:0,cross:0};const d=DT_DUPL_M[mk]||{fb:0,org:0,cross:0};
+        oemGen[oem]+=(g.fb+g.org+g.cross);oemFail[oem]+=(f.fb+f.org+f.cross);oemDupl[oem]+=(d.fb+d.org+d.cross);
+      });
+    });
+  } else {
+    pp.forEach(p=>{
+      const oem=PARTNER_TO_OEM_GROUP[p]||p;
+      if(!oemFail[oem]){oemFail[oem]=0;oemDupl[oem]=0;oemGen[oem]=0;}
+      Object.keys(DT_GEN).forEach(k=>{
+        const sep=k.lastIndexOf('|');const date=k.substring(0,sep);const partner=k.substring(sep+1);
+        if(partner!==p)return;if(selMonthFail!=='all'&&!date.startsWith(selMonthFail))return;
+        dateSet.add(date);
+        const g=DT_GEN[k]||{fb:0,org:0,cross:0};const f=DT_FAIL[k]||{fb:0,org:0,cross:0};const d=DT_DUPL[k]||{fb:0,org:0,cross:0};
+        srcGen.fb+=g.fb;srcGen.org+=g.org;srcGen.cross+=g.cross;
+        srcFail.fb+=f.fb;srcFail.org+=f.org;srcFail.cross+=f.cross;
+        srcDupl.fb+=d.fb;srcDupl.org+=d.org;srcDupl.cross+=d.cross;
+        const gt=g.fb+g.org+g.cross,ft=f.fb+f.org+f.cross,dt=d.fb+d.org+d.cross;
+        oemGen[oem]+=gt;oemFail[oem]+=ft;oemDupl[oem]+=dt;
+      });
+    });
+  }
   const stateFail={},stateDupl={},stateGen={};
   pp.forEach(p=>{Object.keys(DT_STATE).forEach(k=>{
     const p0=k.indexOf('|');const p1=k.indexOf('|',p0+1);
@@ -2248,13 +2291,9 @@ function renderFailure(){
   const totR={fb:0,org:0,cross:0},totF={fb:0,org:0,cross:0},totD={fb:0,org:0,cross:0};
   let rows='';
   dates.forEach(date=>{
-    const gen={fb:0,org:0,cross:0},fail={fb:0,org:0,cross:0},dupl={fb:0,org:0,cross:0};
-    pp.forEach(p=>{const pk=date+'|'+p;
-      const g=DT_GEN[pk]||{};const f=DT_FAIL[pk]||{};const d=DT_DUPL[pk]||{};
-      gen.fb+=g.fb||0;gen.org+=g.org||0;gen.cross+=g.cross||0;
-      fail.fb+=f.fb||0;fail.org+=f.org||0;fail.cross+=f.cross||0;
-      dupl.fb+=d.fb||0;dupl.org+=d.org||0;dupl.cross+=d.cross||0;
-    });
+    const gen=getFDMCounts(date,DT_GEN,DT_GEN_M);
+    const fail=getFDMCounts(date,DT_FAIL,DT_FAIL_M);
+    const dupl=getFDMCounts(date,DT_DUPL,DT_DUPL_M);
     const gT=gen.fb+gen.org+gen.cross,fT=fail.fb+fail.org+fail.cross,dT=dupl.fb+dupl.org+dupl.cross;
     totR.fb+=gen.fb;totR.org+=gen.org;totR.cross+=gen.cross;
     totF.fb+=fail.fb;totF.org+=fail.org;totF.cross+=fail.cross;
