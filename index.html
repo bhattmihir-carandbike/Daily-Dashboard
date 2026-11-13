@@ -2144,9 +2144,17 @@ function buildOemTabsFail(){
     if(selMonthFail!=='all'&&!date.startsWith(selMonthFail))return;
     const oem=PARTNER_TO_OEM_GROUP[partner];if(oem)oems.add(oem);});
   const isAll=selOEMFail==='all';
-  let h=`<button class="oem-tab${isAll?' active':''}" onclick="setOEMFail('all')" style="${isAll?'background:var(--accent);color:#fff;border-color:transparent;':''}">All OEMs</button>`;
-  [...oems].forEach(oem=>{const c=OEM_COLORS[oem]||{hex:'#888'};const isA=selOEMFail===oem;
-    h+=`<button class="oem-tab${isA?' active':''}" data-oem="${oem}" onclick="setOEMFail('${oem.replace(/'/g,"\\'")}') " style="${isA?`background:${c.hex};color:#fff;border-color:transparent;`:''}"><span class="oem-tab-dot" style="background:${c.hex}"></span>${oem}</button>`;});
+  let h=`<button class="oem-tab${isAll?' active':''}" data-oem="all" onclick="setOEMFail('all')" ${isAll?'style="background:var(--accent);color:#fff;border-color:transparent;"':''}>All OEMs</button>`;
+  OEM_ORDER.forEach(oem=>{
+    if(!oems.has(oem))return;
+    const c=OEM_COLORS[oem]||{hex:'#888'};const isA=selOEMFail===oem;
+    h+=`<button class="oem-tab${isA?' active':''}" data-oem="${oem}" onclick="setOEMFail('${oem.replace(/'/g,"\\'")}') " style="${isA?`background:${c.hex};color:#fff;border-color:transparent;`:''}"><span class="oem-tab-dot" style="background:${c.hex}"></span>${oem}</button>`;
+  });
+  Object.keys(OEM_TO_DT_PARTNERS).forEach(oem=>{
+    if(OEM_ORDER.includes(oem)||!oems.has(oem))return;
+    const c=OEM_COLORS[oem]||{hex:'#888'};const isA=selOEMFail===oem;
+    h+=`<button class="oem-tab${isA?' active':''}" data-oem="${oem}" onclick="setOEMFail('${oem.replace(/'/g,"\\'")}') " style="${isA?`background:${c.hex};color:#fff;border-color:transparent;`:''}"><span class="oem-tab-dot" style="background:${c.hex}"></span>${oem}</button>`;
+  });
   w.innerHTML=h;
   if(selOEMFail!=='all'&&!oems.has(selOEMFail))selOEMFail='all';
 }
