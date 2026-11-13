@@ -2028,10 +2028,8 @@ function getDTCounts(date,genStore,storeM){
 function getFDMCounts(date,storeP,storeM){
   const tot={fb:0,org:0,cross:0};
   if(selModelsFail.size>0){
-    const dtUsed=new Set();
     selModelsFail.forEach(camp=>{
-      let v=storeM[date+'|'+camp];
-      if(!v){const oem=OEM_MAP[camp]?.oem||PARTNER_TO_OEM_GROUP[camp];if(oem){const dps=OEM_TO_DT_PARTNERS[oem]||[];if(dps.length===1&&!dtUsed.has(dps[0])){v=storeM[date+'|'+dps[0]];if(v)dtUsed.add(dps[0]);}}}
+      const v=storeM[date+'|'+camp];
       if(v){tot.fb+=v.fb||0;tot.org+=v.org||0;tot.cross+=v.cross||0;}
     });
     return tot;
