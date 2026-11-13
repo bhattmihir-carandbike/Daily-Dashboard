@@ -289,7 +289,8 @@ select:disabled{opacity:.45;cursor:default;}
 .fbd-card{padding:16px 20px;}
 .fbd-legend{display:flex;gap:16px;margin-bottom:12px;font-size:12px;font-weight:600;}
 .fbd-leg-fail{color:#dc2626;}.fbd-leg-dupl{color:#d97706;}
-.fbd-src-row{display:grid;grid-template-columns:76px 1fr 72px 1fr 72px;align-items:center;gap:6px;margin-bottom:9px;font-size:12px;}
+.fbd-src-block{margin-bottom:8px;}
+.fbd-src-sub{display:grid;grid-template-columns:14px 1fr 76px;align-items:center;gap:4px;margin-top:2px;font-size:12px;}
 .fbd-oem-row,.fbd-state-row{display:grid;grid-template-columns:110px 1fr 76px;align-items:center;gap:6px;margin-bottom:8px;font-size:12px;}
 .fbd-src-name{font-weight:600;white-space:nowrap;}
 .fbd-oem-name,.fbd-state-name{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -301,7 +302,8 @@ select:disabled{opacity:.45;cursor:default;}
 .fbd-pct{font-weight:400;color:var(--fg-3);font-size:10.5px;}
 .fbd-empty{color:var(--fg-3);font-size:12px;padding:8px 0;}
 .grid-fail{font-size:11.5px;width:100%;}
-.grid-fail th,.grid-fail td{padding:3px 6px;}
+.grid-fail th,.grid-fail td{padding:2px 6px;}
+.grid-fail tbody tr{line-height:1.3;}
 .grid-fail thead tr:nth-child(2) th{color:#fff;font-size:10px;font-weight:700;padding:4px 6px;text-align:center;}
 .grid-fail thead tr:nth-child(2) th:nth-child(-n+4){background:#ef4444;}
 .grid-fail thead tr:nth-child(2) th:nth-child(n+5){background:#f59e0b;}
@@ -2107,12 +2109,18 @@ function renderFailure(){
   /* Source card */
   const srcData=[{l:'Facebook',g:srcGen.fb,f:srcFail.fb,d:srcDupl.fb},{l:'Organic',g:srcGen.org,f:srcFail.org,d:srcDupl.org},{l:'Cross Sell',g:srcGen.cross,f:srcFail.cross,d:srcDupl.cross}];
   const sfMax=Math.max(1,...srcData.map(s=>s.f)),sdMax=Math.max(1,...srcData.map(s=>s.d));
-  const srcRows=srcData.map(s=>`<div class="fbd-src-row">
+  const srcRows=srcData.map(s=>`<div class="fbd-src-block">
     <div class="fbd-src-name">${s.l}</div>
-    <div class="fbd-bar-wrap"><div class="fbd-bar fbd-bar-fail" style="width:${s.f/sfMax*100}%"></div></div>
-    <div class="fbd-bar-num fbd-num-fail">${fI_(s.f)} <span class="fbd-pct">${pct(s.f,s.g)}</span></div>
-    <div class="fbd-bar-wrap"><div class="fbd-bar fbd-bar-dupl" style="width:${s.d/sdMax*100}%"></div></div>
-    <div class="fbd-bar-num fbd-num-dupl">${fI_(s.d)} <span class="fbd-pct">${pct(s.d,s.g)}</span></div>
+    <div class="fbd-src-sub">
+      <span style="color:#dc2626;font-size:9px;">&#9679;</span>
+      <div class="fbd-bar-wrap"><div class="fbd-bar fbd-bar-fail" style="width:${s.f/sfMax*100}%"></div></div>
+      <div class="fbd-bar-num fbd-num-fail">${fI_(s.f)} <span class="fbd-pct">${pct(s.f,s.g)}</span></div>
+    </div>
+    <div class="fbd-src-sub">
+      <span style="color:#d97706;font-size:9px;">&#9679;</span>
+      <div class="fbd-bar-wrap"><div class="fbd-bar fbd-bar-dupl" style="width:${s.d/sdMax*100}%"></div></div>
+      <div class="fbd-bar-num fbd-num-dupl">${fI_(s.d)} <span class="fbd-pct">${pct(s.d,s.g)}</span></div>
+    </div>
   </div>`).join('');
   /* OEM card */
   const oemEntries=Object.entries(oemGen).filter(([,v])=>v>0).sort((a,b)=>(oemFail[b[0]]||0)-(oemFail[a[0]]||0));
@@ -2160,7 +2168,7 @@ function renderFailure(){
     const dm=date.split('-');const dLabel=`${+dm[2]} ${MONTHS_SHORT[+dm[1]]}`;
     const n=v=>v||'&#8212;';
     rows+=`<tr class="${isWe?'weekend-row':''}">
-      <td class="date-cell"><strong>${dLabel}</strong><br><span class="day-label${isWe?' we':''}">${dy}</span></td>
+      <td class="date-cell" style="white-space:nowrap;"><strong>${dLabel}</strong> <span class="day-label${isWe?' we':''}" style="font-weight:400;font-size:10px;color:var(--fg-3);">${dy}</span></td>
       <td>${n(fail.fb)}</td><td>${n(fail.org)}</td><td>${n(fail.cross)}</td><td class="num-total">${n(fT)}</td>
       <td class="num-leakage">${gT>0?(fT/gT*100).toFixed(1)+'%':'&#8212;'}</td>
       <td>${n(dupl.fb)}</td><td>${n(dupl.org)}</td><td>${n(dupl.cross)}</td><td class="num-total">${n(dT)}</td>
