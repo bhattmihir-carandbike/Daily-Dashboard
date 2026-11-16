@@ -1416,6 +1416,8 @@ function _applyData(agg){
   if(!Object.keys(agg).length){console.warn('fetchFromSheets: no rows matched, keeping existing data');return;}
   RAW.length=0;
   Object.keys(agg).sort().forEach(k=>{const[d,c]=k.split('|');RAW.push([d,c,Math.round(agg[k][0]),Math.round(agg[k][1]*100)/100]);});
+  OEM_ORDER.length=0;
+  RAW.forEach(r=>{const o=(OEM_MAP[r[1]]||{}).oem;if(o&&!OEM_ORDER.includes(o))OEM_ORDER.push(o);});
   rebuildMonthOptions(RAW);
   const latest=RAW.reduce((mx,r)=>r[0]>mx?r[0]:mx,'').slice(0,7)||'all';
   selMonth=latest;selOEM='all';selModels.clear();sortCol='date';sortDir='asc';groupByDate=true;
