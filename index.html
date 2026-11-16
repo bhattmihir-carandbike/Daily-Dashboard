@@ -2303,14 +2303,38 @@ function renderFailure(){
       <div class="fbd-bar-num fbd-num-dupl">${fI_(s.d)}</div>
     </div>
   </div>`).join('');
-  /* OEM card */
-  const oemEntries=Object.entries(oemGen).filter(([,v])=>v>0).sort((a,b)=>(oemFail[b[0]]||0)-(oemFail[a[0]]||0));
-  const ofMax=Math.max(1,...oemEntries.map(([k])=>oemFail[k]||0));
-  const oemRows=oemEntries.map(([oem,gen])=>{const c=OEM_COLORS[oem]||{hex:'#888'};
-    return`<div class="fbd-oem-row"><div class="fbd-oem-name" style="color:${c.hex}">${oem}</div>
-    <div class="fbd-bar-wrap"><div class="fbd-bar fbd-bar-fail" style="width:${(oemFail[oem]||0)/ofMax*100}%"></div></div>
-    <div class="fbd-bar-num fbd-num-fail">${fI_(oemFail[oem]||0)} <span class="fbd-pct">${pct(oemFail[oem]||0,gen)}</span></div>
-  </div>`;}).join('');
+  /* OEM / Model card */
+  let cardTitle,cardRows;
+  if(selOEMFail!=='all'){
+    const campFail={},campGen={};
+    (OEM_TO_CAMPS[selOEMFail]||[]).forEach(camp=>{
+      campFail[camp]=0;campGen[camp]=0;
+      [...dateSet].forEach(date=>{
+        const mk=date+'|'+camp;
+        const g=DT_GEN_M[mk]||{fb:0,org:0,cross:0};const f=DT_FAIL_M[mk]||{fb:0,org:0,cross:0};
+        campGen[camp]+=(g.fb+g.org+g.cross);campFail[camp]+=(f.fb+f.org+f.cross);
+      });
+    });
+    const campEntries=Object.entries(campGen).filter(([,v])=>v>0).sort((a,b)=>(campFail[b[0]]||0)-(campFail[a[0]]||0));
+    const cmMax=Math.max(1,...campEntries.map(([k])=>campFail[k]||0));
+    const oemC=OEM_COLORS[selOEMFail]||{hex:'#888'};
+    cardTitle='By Model';
+    cardRows=campEntries.map(([camp,gen])=>{
+      const modelName=OEM_MAP[camp]?.model||camp;
+      return`<div class="fbd-oem-row"><div class="fbd-oem-name" style="color:${oemC.hex}">${modelName}</div>
+      <div class="fbd-bar-wrap"><div class="fbd-bar fbd-bar-fail" style="width:${(campFail[camp]||0)/cmMax*100}%"></div></div>
+      <div class="fbd-bar-num fbd-num-fail">${fI_(campFail[camp]||0)} <span class="fbd-pct">${pct(campFail[camp]||0,gen)}</span></div>
+    </div>`;}).join('')||'<div class="fbd-empty">No model data</div>';
+  } else {
+    const oemEntries=Object.entries(oemGen).filter(([,v])=>v>0).sort((a,b)=>(oemFail[b[0]]||0)-(oemFail[a[0]]||0));
+    const ofMax=Math.max(1,...oemEntries.map(([k])=>oemFail[k]||0));
+    cardTitle='By Partner / OEM';
+    cardRows=oemEntries.map(([oem,gen])=>{const c=OEM_COLORS[oem]||{hex:'#888'};
+      return`<div class="fbd-oem-row"><div class="fbd-oem-name" style="color:${c.hex}">${oem}</div>
+      <div class="fbd-bar-wrap"><div class="fbd-bar fbd-bar-fail" style="width:${(oemFail[oem]||0)/ofMax*100}%"></div></div>
+      <div class="fbd-bar-num fbd-num-fail">${fI_(oemFail[oem]||0)} <span class="fbd-pct">${pct(oemFail[oem]||0,gen)}</span></div>
+    </div>`;}).join('')||'<div class="fbd-empty">No data</div>';
+  }
   /* State card */
   const topStates=Object.entries(stateGen).sort((a,b)=>b[1]-a[1]).slice(0,8);
   const stfMax=Math.max(1,...topStates.map(([s])=>stateFail[s]||0));
@@ -2323,7 +2347,7 @@ function renderFailure(){
     <div class="tcard fbd-card"><div class="tcard-hdr"><span class="tcard-title">By Source</span></div>
       <div class="fbd-legend"><span class="fbd-leg-fail">&#9679; Failed</span><span class="fbd-leg-dupl">&#9679; Duplicate</span></div>
       ${srcRows}</div>
-    <div class="tcard fbd-card"><div class="tcard-hdr"><span class="tcard-title">By Partner / OEM</span></div>${oemRows||'<div class="fbd-empty">No data</div>'}</div>
+    <div class="tcard fbd-card"><div class="tcard-hdr"><span class="tcard-title">${cardTitle}</span></div>${cardRows}</div>
     <div class="tcard fbd-card"><div class="tcard-hdr"><span class="tcard-title">Top States — Failed</span></div>${stateRows||'<div class="fbd-empty">No data</div>'}</div>
   </div>`;
   document.getElementById('failBody').innerHTML=h;
