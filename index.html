@@ -1336,6 +1336,10 @@ const OEM_MAP = {
   "Honda H'Ness CB350":{oem:"Honda",            model:"H'Ness CB350",  hex:"#06b6d4"},
   "3X0":               {oem:"Mahindra",         model:"3X0",           hex:"#ef4444"},
   "Honda CB350RS":     {oem:"Honda",            model:"CB350RS",       hex:"#a855f7"},
+  "BGauss OoWah":     {oem:"BGauss",           model:"Oo Wah",        hex:"#22d3ee"},
+  "BGauss RUV350":    {oem:"BGauss",           model:"RUV350",        hex:"#06b6d4"},
+  "BGauss C12Max":    {oem:"BGauss",           model:"C12 Max",       hex:"#0891b2"},
+  "BGauss C12MaxR":   {oem:"BGauss",           model:"C12 MaxR",      hex:"#0e7490"},
 };
 
 const OEM_COLORS = {
@@ -1347,10 +1351,11 @@ const OEM_COLORS = {
   "Mahindra":        {hex:"#d97706", bg:"rgba(217,119,6,.12)"},
   "Simple Energy":   {hex:"#6366f1", bg:"rgba(99,102,241,.12)"},
   "Policy Bazzar":   {hex:"#16a34a", bg:"rgba(22,163,74,.12)"},
+  "BGauss":          {hex:"#0891b2", bg:"rgba(8,145,178,.12)"},
 };
 
-const PARTNER_TO_OEM_GROUP={'Spinny':'Spinny','Spinny Sell Car':'Spinny','Cars24':'Cars24','Cars24 (Sell Car)':'Cars24','Honda Bikes':'Honda','Policy Bazzar':'Policy Bazzar','Classic Legends':'Classic Legends','JLR':'JLR','Mahindra':'Mahindra','Simple Energy':'Simple Energy'};
-const OEM_TO_DT_PARTNERS={'Spinny':['Spinny','Spinny Sell Car'],'Cars24':['Cars24','Cars24 (Sell Car)'],'Honda':['Honda Bikes'],'Policy Bazzar':['Policy Bazzar'],'Classic Legends':['Classic Legends'],'JLR':['JLR'],'Mahindra':['Mahindra'],'Simple Energy':['Simple Energy']};
+const PARTNER_TO_OEM_GROUP={'Spinny':'Spinny','Spinny Sell Car':'Spinny','Cars24':'Cars24','Cars24 (Sell Car)':'Cars24','Honda Bikes':'Honda','Policy Bazzar':'Policy Bazzar','Classic Legends':'Classic Legends','JLR':'JLR','Mahindra':'Mahindra','Simple Energy':'Simple Energy','BGauss Bikes':'BGauss'};
+const OEM_TO_DT_PARTNERS={'Spinny':['Spinny','Spinny Sell Car'],'Cars24':['Cars24','Cars24 (Sell Car)'],'Honda':['Honda Bikes'],'Policy Bazzar':['Policy Bazzar'],'Classic Legends':['Classic Legends'],'JLR':['JLR'],'Mahindra':['Mahindra'],'Simple Energy':['Simple Energy'],'BGauss':['BGauss Bikes']};
 const DT_PARTNER_TO_CAMP={'Spinny':'Spinny Used Car','Spinny Sell Car':'Spinny Sell Car','Cars24':'Cars24','Cars24 (Sell Car)':'Cars24 Sell Car'};
 const MONTHS_SHORT=["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 const DAYS=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
@@ -1389,6 +1394,14 @@ function getCLModelFromAdSet(adset){
   if(/^Jawa42FJ/.test(p))        return 'CL Jawa 42 FJ';
   if(/^YezdiRoadster/.test(p))   return 'CL Yezdi Roadster';
   if(/^YezdiScrambler/.test(p))  return 'CL Yezdi Scrambler';
+  return null;
+}
+function getBGaussModelFromAdSet(adset){
+  const p=(adset||'').replace(/^CNB\|\|Bgauss_/,'').replace(/^Bgauss_/,'');
+  if(/^C12MaxR/.test(p)) return 'BGauss C12MaxR';
+  if(/^C12Max/.test(p))  return 'BGauss C12Max';
+  if(/^RUV350/.test(p))  return 'BGauss RUV350';
+  if(/^OoWah/.test(p))   return 'BGauss OoWah';
   return null;
 }
 function rebuildMonthOptions(rows){
@@ -1551,6 +1564,11 @@ async function fetchFromSheets(){
         if(!cl||cl==='CL Jawa AllStars')continue;
         campKey=cl;
       }
+      if(campFor==='BGauss_LG'){
+        const bg=getBGaussModelFromAdSet(adset);
+        if(!bg)continue;
+        campKey=bg;
+      }
       if(!campKey)continue;
       const k=date+'|'+campKey;
       if(agg[k]){agg[k][0]+=leads;agg[k][1]+=spend;}else agg[k]=[leads,spend];
@@ -1586,6 +1604,7 @@ function loadExcelFile(input){
         if(!/^\d{4}-\d{2}-\d{2}$/.test(date))continue;
         let campKey=campFor;
         if(campFor==='Classic Legends 2W'){const cl=getCLModelFromAdSet(adset);if(cl)campKey=cl;else continue;}
+        if(campFor==='BGauss_LG'){const bg=getBGaussModelFromAdSet(adset);if(bg)campKey=bg;else continue;}
         if(!campKey||campKey==='Other')continue;
         const k=date+'|'+campKey;
         if(agg[k]){agg[k][0]+=leads;agg[k][1]+=spend;}else{agg[k]=[leads,spend];}
