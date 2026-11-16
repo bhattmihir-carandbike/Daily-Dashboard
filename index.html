@@ -317,7 +317,11 @@ select:disabled{opacity:.45;cursor:default;}
 .grid-fail td:nth-child(11),.grid-fail td:nth-child(12),.grid-fail td:nth-child(13),.grid-fail td:nth-child(14),.grid-fail td:nth-child(15),.grid-fail td:nth-child(16){border-left:1px dashed rgba(217,119,6,.3);}
 .grid-fail td:nth-child(17){border-left:2px solid #b45309;}
 .grid-fail td:nth-child(18){border-left:2px solid #374151;}
+.grid-fail td:nth-child(19){border-left:2px solid #1f2937;}
 .grid-fail .src-pct-col{font-size:10px;color:var(--fg-3);font-weight:500;text-align:center;}
+.grid-fail td{color:#111;}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]) .grid-fail td{color:var(--fg)!important;}}
+:root[data-theme="dark"] .grid-fail td{color:var(--fg)!important;}
 </style>
 
 <div class="sticky-band"><header class="hdr">
@@ -499,6 +503,7 @@ select:disabled{opacity:.45;cursor:default;}
             <th colspan="7" class="grp-hdr" style="background:#d97706;color:#fff;">Duplicate Leads</th>
             <th rowspan="2" class="grp-hdr" style="background:#b45309;color:#fff;vertical-align:bottom;">Dupl %</th>
             <th rowspan="2" class="grp-hdr" style="background:#374151;color:#fff;vertical-align:bottom;">Total</th>
+            <th rowspan="2" class="grp-hdr" style="background:#1f2937;color:#fff;vertical-align:bottom;">Total %</th>
           </tr>
           <tr>
             <th>Facebook</th><th>FB%</th><th>Organic</th><th>Org%</th><th>Cross Sell</th><th>CS%</th><th>Total</th>
@@ -2347,6 +2352,7 @@ function renderFailure(){
       <td>${n(dupl.fb)}</td><td class="src-pct-col">${sp(dupl.fb,gen.fb)}</td><td>${n(dupl.org)}</td><td class="src-pct-col">${sp(dupl.org,gen.org)}</td><td>${n(dupl.cross)}</td><td class="src-pct-col">${sp(dupl.cross,gen.cross)}</td><td class="num-total">${n(dT)}</td>
       <td class="num-leakage">${gT>0?(dT/gT*100).toFixed(1)+'%':'&#8212;'}</td>
       <td class="num-total">${n(gT)}</td>
+      <td class="num-total" style="font-weight:800;">${gT>0?((fT+dT)/gT*100).toFixed(1)+'%':'&#8212;'}</td>
     </tr>`;
   });
   if(dates.length){
@@ -2358,6 +2364,7 @@ function renderFailure(){
       <td>${fI_(totD.fb)}</td><td class="src-pct-col">${tsp(totD.fb,totR.fb)}</td><td>${fI_(totD.org)}</td><td class="src-pct-col">${tsp(totD.org,totR.org)}</td><td>${fI_(totD.cross)}</td><td class="src-pct-col">${tsp(totD.cross,totR.cross)}</td><td class="num-total">${fI_(tdT)}</td>
       <td class="num-leakage">${tgT>0?(tdT/tgT*100).toFixed(1)+'%':'&#8212;'}</td>
       <td class="num-total">${fI_(tgT)}</td>
+      <td class="num-total" style="font-weight:800;">${tgT>0?((tfT+tdT)/tgT*100).toFixed(1)+'%':'&#8212;'}</td>
     </tr>`;
   }
   document.getElementById('failTbody').innerHTML=rows||'<tr><td colspan="12" class="empty-state">No failure data for this filter.</td></tr>';
