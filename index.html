@@ -1871,6 +1871,11 @@ function getActiveForMonthTrig(){
     if(selMonthTrig!=='all'&&!date.startsWith(selMonthTrig))return;
     const oem=PARTNER_TO_OEM_GROUP[partner];if(oem)oems.add(oem);
   });
+  Object.keys(DT_GEN_M).forEach(k=>{
+    const sep=k.lastIndexOf('|');const date=k.substring(0,sep);const ck=k.substring(sep+1);
+    if(selMonthTrig!=='all'&&!date.startsWith(selMonthTrig))return;
+    const info=OEM_MAP[ck];if(info){oems.add(info.oem);camps.add(ck);}
+  });
   return{oems,camps};
 }
 function buildOemTabsTrig(){
@@ -1951,6 +1956,11 @@ function getModelCampsFail(){
     const sep=k.lastIndexOf('|');const date=k.substring(0,sep);const partner=k.substring(sep+1);
     if(selMonthFail!=='all'&&!date.startsWith(selMonthFail))return;
     const oem=PARTNER_TO_OEM_GROUP[partner];if(oem)oems.add(oem);
+  });
+  Object.keys(DT_GEN_M).forEach(k=>{
+    const sep=k.lastIndexOf('|');const date=k.substring(0,sep);const ck=k.substring(sep+1);
+    if(selMonthFail!=='all'&&!date.startsWith(selMonthFail))return;
+    const info=OEM_MAP[ck];if(info){oems.add(info.oem);camps.add(ck);}
   });
   const pool=selOEMFail==='all'?Object.keys(OEM_MAP):(OEM_TO_CAMPS[selOEMFail]||[]);
   const result=new Set(pool.filter(c=>camps.has(c)));
