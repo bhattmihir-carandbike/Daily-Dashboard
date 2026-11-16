@@ -1564,7 +1564,7 @@ async function fetchFromSheets(){
         if(!cl||cl==='CL Jawa AllStars')continue;
         campKey=cl;
       }
-      if(/^bgauss/i.test(campFor)){
+      if(/bgauss/i.test(campFor)){
         if(OEM_MAP[campFor]){campKey=campFor;}
         else{const bg=getBGaussModelFromAdSet(adset);if(!bg)continue;campKey=bg;}
       }
@@ -1605,7 +1605,7 @@ function loadExcelFile(input){
         if(!/^\d{4}-\d{2}-\d{2}$/.test(date))continue;
         let campKey=campFor;
         if(campFor==='Classic Legends 2W'){const cl=getCLModelFromAdSet(adset);if(cl)campKey=cl;else continue;}
-        if(/^bgauss/i.test(campFor)){if(OEM_MAP[campFor]){campKey=campFor;}else{const bg=getBGaussModelFromAdSet(adset);if(!bg)continue;campKey=bg;}}
+        if(/bgauss/i.test(campFor)){if(OEM_MAP[campFor]){campKey=campFor;}else{const bg=getBGaussModelFromAdSet(adset);if(!bg)continue;campKey=bg;}}
         if(!campKey||campKey==='Other')continue;
         const k=date+'|'+campKey;
         if(agg[k]){agg[k][0]+=leads;agg[k][1]+=spend;}else{agg[k]=[leads,spend];}
