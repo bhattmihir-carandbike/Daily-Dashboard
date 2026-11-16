@@ -1546,8 +1546,6 @@ async function fetchFromSheets(){
     console.log('Sheets columns detected — date:',iDate,'adset:',iAdset,'campaign:',iCamp,'leads:',iLeads,'spend:',iSpend,'| headers:',rows[0].join(' | '));
     if([iDate,iCamp,iLeads,iSpend].some(i=>i===-1))
       throw new Error('Missing columns. Found: '+rows[0].join(', '));
-    const bgRawRows=rows.slice(1).filter(r=>/bgauss/i.test((r[iCamp]||''))||/bgauss/i.test((r[iAdset]||'')));
-    console.log('BGauss raw rows in sheet:',bgRawRows.length,bgRawRows.slice(0,3).map(r=>({cf:(r[iCamp]||'').trim(),as:(r[iAdset]||'').trim().slice(0,35),l:r[iLeads],s:r[iSpend]})));
     const agg={};
     for(let i=1;i<rows.length;i++){
       const row=rows[i];
@@ -1577,8 +1575,6 @@ async function fetchFromSheets(){
       const k=date+'|'+campKey;
       if(agg[k]){agg[k][0]+=leads;agg[k][1]+=spend;}else agg[k]=[leads,spend];
     }
-    const bgKeys=Object.keys(agg).filter(k=>k.includes('BGauss'));
-    console.log('BGauss spend keys found:',bgKeys.length,bgKeys.slice(0,5));
     _applyData(agg);
   }catch(err){
     console.warn('Sheets refresh:',err.message);
