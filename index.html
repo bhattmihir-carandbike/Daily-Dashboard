@@ -1397,11 +1397,11 @@ function getCLModelFromAdSet(adset){
   return null;
 }
 function getBGaussModelFromAdSet(adset){
-  const p=(adset||'').replace(/^CNB\|\|Bgauss_/,'').replace(/^Bgauss_/,'');
-  if(/^C12MaxR/.test(p)) return 'BGauss C12MaxR';
-  if(/^C12Max/.test(p))  return 'BGauss C12Max';
-  if(/^RUV350/.test(p))  return 'BGauss RUV350';
-  if(/^OoWah/.test(p))   return 'BGauss OoWah';
+  const p=(adset||'').replace(/^CNB\|\|B[Gg]auss_/,'').replace(/^B[Gg]auss_/,'');
+  if(/^C12MaxR/i.test(p)) return 'BGauss C12MaxR';
+  if(/^C12Max/i.test(p))  return 'BGauss C12Max';
+  if(/^RUV350/i.test(p))  return 'BGauss RUV350';
+  if(/^oowah/i.test(p))   return 'BGauss OoWah';
   return null;
 }
 function rebuildMonthOptions(rows){
@@ -1564,7 +1564,7 @@ async function fetchFromSheets(){
         if(!cl||cl==='CL Jawa AllStars')continue;
         campKey=cl;
       }
-      if(campFor==='BGauss_LG'){
+      if(campFor.replace(/[\s_]/g,'').toLowerCase()==='bgausslg'){
         const bg=getBGaussModelFromAdSet(adset);
         if(!bg)continue;
         campKey=bg;
@@ -1604,7 +1604,7 @@ function loadExcelFile(input){
         if(!/^\d{4}-\d{2}-\d{2}$/.test(date))continue;
         let campKey=campFor;
         if(campFor==='Classic Legends 2W'){const cl=getCLModelFromAdSet(adset);if(cl)campKey=cl;else continue;}
-        if(campFor==='BGauss_LG'){const bg=getBGaussModelFromAdSet(adset);if(bg)campKey=bg;else continue;}
+        if(campFor.replace(/[\s_]/g,'').toLowerCase()==='bgausslg'){const bg=getBGaussModelFromAdSet(adset);if(bg)campKey=bg;else continue;}
         if(!campKey||campKey==='Other')continue;
         const k=date+'|'+campKey;
         if(agg[k]){agg[k][0]+=leads;agg[k][1]+=spend;}else{agg[k]=[leads,spend];}
