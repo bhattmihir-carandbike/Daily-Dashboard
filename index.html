@@ -1544,8 +1544,8 @@ async function fetchFromSheets(){
     console.log('Sheets columns detected — date:',iDate,'adset:',iAdset,'campaign:',iCamp,'leads:',iLeads,'spend:',iSpend,'| headers:',rows[0].join(' | '));
     if([iDate,iCamp,iLeads,iSpend].some(i=>i===-1))
       throw new Error('Missing columns. Found: '+rows[0].join(', '));
-    const bgRawRows=rows.slice(1).filter(r=>/bgauss/i.test((r[iCamp]||'')));
-    console.log('BGauss raw rows in sheet:',bgRawRows.length,bgRawRows.slice(0,3).map(r=>({cf:(r[iCamp]||'').trim(),as:(r[iAdset]||'').trim().slice(0,30),l:r[iLeads],s:r[iSpend]})));
+    const bgRawRows=rows.slice(1).filter(r=>/bgauss/i.test((r[iCamp]||''))||/bgauss/i.test((r[iAdset]||'')));
+    console.log('BGauss raw rows in sheet:',bgRawRows.length,bgRawRows.slice(0,3).map(r=>({cf:(r[iCamp]||'').trim(),as:(r[iAdset]||'').trim().slice(0,35),l:r[iLeads],s:r[iSpend]})));
     const agg={};
     for(let i=1;i<rows.length;i++){
       const row=rows[i];
@@ -1565,12 +1565,13 @@ async function fetchFromSheets(){
         const cl=getCLModelFromAdSet(adset);
         if(!cl||cl==='CL Jawa AllStars')continue;
         campKey=cl;
-      }
-      if(/bgauss/i.test(campFor)){
+      } else if(/bgauss/i.test(campFor)){
         if(OEM_MAP[campFor]){campKey=campFor;}
         else{const bg=getBGaussModelFromAdSet(adset);if(!bg)continue;campKey=bg;}
+      } else if(/bgauss/i.test(adset)){
+        const bg=getBGaussModelFromAdSet(adset);if(!bg)continue;campKey=bg;
       }
-      if(!campKey)continue;
+      if(!campKey||campKey==='Other')continue;
       const k=date+'|'+campKey;
       if(agg[k]){agg[k][0]+=leads;agg[k][1]+=spend;}else agg[k]=[leads,spend];
     }
@@ -1607,7 +1608,8 @@ function loadExcelFile(input){
         if(!/^\d{4}-\d{2}-\d{2}$/.test(date))continue;
         let campKey=campFor;
         if(campFor==='Classic Legends 2W'){const cl=getCLModelFromAdSet(adset);if(cl)campKey=cl;else continue;}
-        if(/bgauss/i.test(campFor)){if(OEM_MAP[campFor]){campKey=campFor;}else{const bg=getBGaussModelFromAdSet(adset);if(!bg)continue;campKey=bg;}}
+        else if(/bgauss/i.test(campFor)){if(OEM_MAP[campFor]){campKey=campFor;}else{const bg=getBGaussModelFromAdSet(adset);if(!bg)continue;campKey=bg;}}
+        else if(/bgauss/i.test(adset)){const bg=getBGaussModelFromAdSet(adset);if(!bg)continue;campKey=bg;}
         if(!campKey||campKey==='Other')continue;
         const k=date+'|'+campKey;
         if(agg[k]){agg[k][0]+=leads;agg[k][1]+=spend;}else{agg[k]=[leads,spend];}
