@@ -336,6 +336,7 @@ select:disabled{opacity:.45;cursor:default;}
 .view-scrolled .grid-trig thead tr:nth-child(2) th{position:sticky;top:var(--trig-h1,34px);z-index:3;}
 .view-scrolled .grid-fail thead tr:nth-child(2) th{position:sticky;top:var(--fail-h1,34px);z-index:3;}
 .view-scrolled .grid-leak thead th{position:sticky;top:0;z-index:4;}
+.view-scrolled #failBody{display:none;}
 </style>
 
 <div class="sticky-band"><header class="hdr">
@@ -2483,7 +2484,13 @@ function _collapseFilters(view,container){
   _updateNavChips(view);
   window.scrollTo({top:0,behavior:'instant'});
   const _ts=container.querySelector('.tscroll');
-  if(_ts){_ts.addEventListener('scroll',function _onBack(){if(_ts.scrollTop===0){_ts.removeEventListener('scroll',_onBack);expandFilters(view);}},{passive:true});}
+  if(_ts){
+    const _clean=function(){_ts.removeEventListener('wheel',_onW);_ts.removeEventListener('scroll',_onS);};
+    const _onW=function(e){if(container.classList.contains('view-scrolled')&&_ts.scrollTop===0&&e.deltaY<0){_clean();expandFilters(view);}};
+    const _onS=function(){if(container.classList.contains('view-scrolled')&&_ts.scrollTop===0){_clean();expandFilters(view);}};
+    _ts.addEventListener('wheel',_onW,{passive:true});
+    _ts.addEventListener('scroll',_onS,{passive:true});
+  }
 }
 function setupFilterCollapse(){
   const sbH=_sbH();
@@ -2496,7 +2503,7 @@ function setupFilterCollapse(){
       const _secMap={'trigger':'filterSectionTrig','failure':'filterSectionFail','leakage':'filterSectionLeakage'};
       const sec=document.getElementById(_secMap[view]);
       if(!sec)return;
-      if(window.scrollY>20)_collapseFilters(view,con);
+      if(window.scrollY>sec.offsetHeight)_collapseFilters(view,con);
     });
   },{passive:true});
 }
