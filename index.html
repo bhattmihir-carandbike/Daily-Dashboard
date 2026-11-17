@@ -2170,7 +2170,7 @@ document.addEventListener('click',e=>{
 });
 
 function switchView(v){
-  ['leakage','trigger','failure'].forEach(pv=>{const pc=document.getElementById('view-'+pv);if(pc)pc.classList.remove('view-scrolled');});
+  ['leakage','trigger','failure'].forEach(pv=>{const pc=document.getElementById('view-'+pv);if(pc){pc.classList.remove('view-scrolled');pc._expanding=false;}});
   const chips=document.getElementById('navFilterChips');
   if(chips){chips.innerHTML='';chips.classList.remove('visible');}
   window.scrollTo({top:0,behavior:'instant'});
@@ -2183,6 +2183,8 @@ function switchView(v){
   document.getElementById('view-failure').style.display=v==='failure'?'':'none';
   if(v==='trigger'){buildOemTabsTrig();buildModelDropTrig();renderTrigger();}
   if(v==='failure'){buildOemTabsFail();buildModelDropFail();updateModelLabelFail();renderFailure();}
+  const _nv=document.getElementById('view-'+v);
+  if(_nv){_nv._expanding=true;setTimeout(()=>{_nv._expanding=false;},400);}
 }
 
 document.querySelectorAll('.grid-table th[data-col]').forEach(th=>{
@@ -2452,15 +2454,13 @@ function renderFailure(){
 
 /* ── FILTER COLLAPSE + STICKY HEADER ── */
 function _sbH(){return document.querySelector('.sticky-band')?.offsetHeight||104;}
-function _cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
+const _secMap={trigger:'filterSectionTrig',failure:'filterSectionFail',leakage:'filterSectionLeakage'};
 function expandFilters(view){
   const c=document.getElementById('view-'+view);
   const chips=document.getElementById('navFilterChips');
-  if(c)c.classList.remove('view-scrolled');
+  window.scrollTo({top:0,behavior:'instant'});
+  if(c){c.classList.remove('view-scrolled');c._expanding=true;setTimeout(()=>{c._expanding=false;},600);}
   if(chips){chips.innerHTML='';chips.classList.remove('visible');}
-  const _secMap={'trigger':'filterSectionTrig','failure':'filterSectionFail','leakage':'filterSectionLeakage'};
-  const sec=document.getElementById(_secMap[view]);
-  if(sec){const y=sec.getBoundingClientRect().top+window.scrollY-_sbH()-8;window.scrollTo({top:Math.max(0,y),behavior:'smooth'});}
 }
 function _updateNavChips(view){
   const chips=document.getElementById('navFilterChips');if(!chips)return;
@@ -2482,7 +2482,6 @@ function _collapseFilters(view,container){
   }
   container.classList.add('view-scrolled');
   _updateNavChips(view);
-  window.scrollTo({top:0,behavior:'instant'});
   const _ts=container.querySelector('.tscroll');
   if(_ts){
     const _clean=function(){_ts.removeEventListener('wheel',_onW);_ts.removeEventListener('scroll',_onS);};
@@ -2495,17 +2494,17 @@ function _collapseFilters(view,container){
 function setupFilterCollapse(){
   const sbH=_sbH();
   document.documentElement.style.setProperty('--sticky-band-h',sbH+'px');
-  window.addEventListener('scroll',function(){
-    ['trigger','failure','leakage'].forEach(view=>{
-      if(activeView!==view)return;
-      const con=document.getElementById('view-'+view);
-      if(!con||con.classList.contains('view-scrolled'))return;
-      const _secMap={'trigger':'filterSectionTrig','failure':'filterSectionFail','leakage':'filterSectionLeakage'};
-      const sec=document.getElementById(_secMap[view]);
-      if(!sec)return;
-      if(window.scrollY>sec.offsetHeight)_collapseFilters(view,con);
-    });
-  },{passive:true});
+  ['trigger','failure','leakage'].forEach(view=>{
+    const con=document.getElementById('view-'+view);
+    const sec=document.getElementById(_secMap[view]);
+    if(!con||!sec)return;
+    new IntersectionObserver(function(entries){
+      entries.forEach(e=>{
+        if(!e.isIntersecting&&activeView===view&&!con.classList.contains('view-scrolled')&&!con._expanding)
+          _collapseFilters(view,con);
+      });
+    },{root:null,rootMargin:`-${sbH}px 0px 0px 0px`,threshold:0}).observe(sec);
+  });
 }
 setupFilterCollapse();
 
