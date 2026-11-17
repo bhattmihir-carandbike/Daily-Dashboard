@@ -329,11 +329,12 @@ select:disabled{opacity:.45;cursor:default;}
 .nav-chip:hover,.nav-chip.active{background:var(--accent);color:#fff;border-color:var(--accent);}
 /* ── SCROLLED VIEW (filters collapsed) ── */
 .view-scrolled .filter-section{display:none;}
-.view-scrolled .tcard{overflow:visible;}
-.view-scrolled .tcard-hdr{position:sticky;top:var(--sticky-band-h,104px);z-index:5;background:var(--surface);}
-.view-scrolled .grid-trig thead tr:nth-child(1) th,.view-scrolled .grid-fail thead tr:nth-child(1) th{position:sticky;top:calc(var(--sticky-band-h,104px) + var(--tcard-hdr-h,42px));z-index:4;}
-.view-scrolled .grid-trig thead tr:nth-child(2) th{position:sticky;top:calc(var(--sticky-band-h,104px) + var(--tcard-hdr-h,42px) + var(--trig-h1,34px));z-index:3;}
-.view-scrolled .grid-fail thead tr:nth-child(2) th{position:sticky;top:calc(var(--sticky-band-h,104px) + var(--tcard-hdr-h,42px) + var(--fail-h1,34px));z-index:3;}
+.view-scrolled{height:calc(100vh - var(--sticky-band-h,104px));box-sizing:border-box;display:flex;flex-direction:column;}
+.view-scrolled .tcard{flex:1;min-height:200px;display:flex;flex-direction:column;overflow:hidden;}
+.view-scrolled .tscroll{flex:1;overflow-y:auto;min-height:0;}
+.view-scrolled .grid-trig thead tr:nth-child(1) th,.view-scrolled .grid-fail thead tr:nth-child(1) th{position:sticky;top:0;z-index:4;}
+.view-scrolled .grid-trig thead tr:nth-child(2) th{position:sticky;top:var(--trig-h1,34px);z-index:3;}
+.view-scrolled .grid-fail thead tr:nth-child(2) th{position:sticky;top:var(--fail-h1,34px);z-index:3;}
 </style>
 
 <div class="sticky-band"><header class="hdr">
@@ -2469,15 +2470,11 @@ function _updateNavChips(view){
   chips.classList.add('visible');
 }
 function _collapseFilters(view,container){
-  const sbH=_sbH();
   const h1=container.querySelector(view==='trigger'?'.grid-trig thead tr:first-child th':'.grid-fail thead tr:first-child th');
   if(h1)document.documentElement.style.setProperty(view==='trigger'?'--trig-h1':'--fail-h1',h1.offsetHeight+'px');
-  const hdrEl=container.querySelector('.tcard-hdr');
-  if(hdrEl)document.documentElement.style.setProperty('--tcard-hdr-h',hdrEl.offsetHeight+'px');
   container.classList.add('view-scrolled');
   _updateNavChips(view);
-  const y=container.getBoundingClientRect().top+window.scrollY-sbH;
-  window.scrollTo({top:Math.max(0,y),behavior:'instant'});
+  window.scrollTo({top:0,behavior:'instant'});
 }
 function setupFilterCollapse(){
   document.documentElement.style.setProperty('--sticky-band-h',_sbH()+'px');
