@@ -114,12 +114,12 @@ select:disabled{opacity:.45;cursor:default;}
 .toggle-btn:not(.active):hover{background:var(--surface-2);}
 
 /* TABLE CARD */
-.tcard{background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;border:1px solid var(--border);}
+.tcard{background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow);overflow:clip;border:1px solid var(--border);}
 .tcard-hdr{padding:13px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;background:var(--surface-2);}
 .tcard-title{font-size:15px;font-weight:700;color:var(--fg);}
 .tcard-count{font-size:13px;color:var(--fg-2);background:var(--surface);border:1px solid var(--border);border-radius:100px;padding:2px 10px;font-family:'IBM Plex Mono',monospace;}
 
-.tscroll{overflow-x:auto;}
+.tscroll{overflow-x:auto;overflow-y:clip;}
 .grid-table{width:100%;border-collapse:collapse;font-size:15px;min-width:580px;}
 .grid-table thead tr{background:var(--surface-3);}
 .grid-table th{padding:10px 16px;text-align:left;font-size:12px;font-weight:700;letter-spacing:.08em;
@@ -322,21 +322,10 @@ select:disabled{opacity:.45;cursor:default;}
 .grid-fail td{color:#111;}
 @media(prefers-color-scheme:dark){:root:not([data-theme="light"]) .grid-fail td{color:var(--fg)!important;}}
 :root[data-theme="dark"] .grid-fail td{color:var(--fg)!important;}
-/* ── COMPACT NAV FILTER CHIPS ── */
-.nav-filter-chips{margin-left:auto;display:none;align-items:center;gap:5px;padding:0 8px;}
-.nav-filter-chips.visible{display:flex;}
-.nav-chip{display:inline-flex;align-items:center;gap:3px;padding:3px 10px;border-radius:100px;font-size:11px;font-weight:600;cursor:pointer;border:1.5px solid var(--border);background:var(--surface-2);color:var(--fg-2);white-space:nowrap;transition:background .12s,color .12s,border-color .12s;user-select:none;}
-.nav-chip:hover,.nav-chip.active{background:var(--accent);color:#fff;border-color:var(--accent);}
-/* ── SCROLLED VIEW (filters collapsed) ── */
-.view-scrolled .filter-section{display:none;}
-.view-scrolled{position:fixed;top:var(--sticky-band-h,104px);left:0;right:0;bottom:0;max-width:none;margin:0;padding:12px 16px 0;display:flex;flex-direction:column;overflow:hidden;z-index:10;background:var(--bg);}
-.view-scrolled .tcard{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;}
-.view-scrolled .tscroll{flex:1;overflow-y:auto;min-height:0;}
-.view-scrolled .grid-trig thead tr:nth-child(1) th,.view-scrolled .grid-fail thead tr:nth-child(1) th{position:sticky;top:0;z-index:4;}
-.view-scrolled .grid-trig thead tr:nth-child(2) th{position:sticky;top:var(--trig-h1,34px);z-index:3;}
-.view-scrolled .grid-fail thead tr:nth-child(2) th{position:sticky;top:var(--fail-h1,34px);z-index:3;}
-.view-scrolled .grid-leak thead th{position:sticky;top:0;z-index:4;}
-.view-scrolled #failBody{display:none;}
+/* ── STICKY TABLE HEADERS ── */
+.grid-table thead th{background:var(--surface-3);position:sticky;top:var(--sticky-band-h,104px);z-index:4;}
+.grid-trig thead tr:nth-child(2) th{position:sticky;top:calc(var(--sticky-band-h,104px) + var(--trig-h1,32px));z-index:3;}
+.grid-fail thead tr:nth-child(2) th{position:sticky;top:calc(var(--sticky-band-h,104px) + var(--fail-h1,32px));z-index:3;}
 </style>
 
 <div class="sticky-band"><header class="hdr">
@@ -2170,9 +2159,6 @@ document.addEventListener('click',e=>{
 });
 
 function switchView(v){
-  ['leakage','trigger','failure'].forEach(pv=>{const pc=document.getElementById('view-'+pv);if(pc){pc.classList.remove('view-scrolled');pc._expanding=false;}});
-  const chips=document.getElementById('navFilterChips');
-  if(chips){chips.innerHTML='';chips.classList.remove('visible');}
   window.scrollTo({top:0,behavior:'instant'});
   activeView=v;
   document.querySelectorAll('.view-tab').forEach(b=>b.classList.remove('active'));
@@ -2183,8 +2169,7 @@ function switchView(v){
   document.getElementById('view-failure').style.display=v==='failure'?'':'none';
   if(v==='trigger'){buildOemTabsTrig();buildModelDropTrig();renderTrigger();}
   if(v==='failure'){buildOemTabsFail();buildModelDropFail();updateModelLabelFail();renderFailure();}
-  const _nv=document.getElementById('view-'+v);
-  if(_nv){_nv._expanding=true;setTimeout(()=>{_nv._expanding=false;},400);}
+  _updateStickyOffsets();
 }
 
 document.querySelectorAll('.grid-table th[data-col]').forEach(th=>{
@@ -2452,61 +2437,19 @@ function renderFailure(){
   document.getElementById('failTbody').innerHTML=rows||'<tr><td colspan="12" class="empty-state">No failure data for this filter.</td></tr>';
 }
 
-/* ── FILTER COLLAPSE + STICKY HEADER ── */
-function _sbH(){return document.querySelector('.sticky-band')?.offsetHeight||104;}
-const _secMap={trigger:'filterSectionTrig',failure:'filterSectionFail',leakage:'filterSectionLeakage'};
-function expandFilters(view){
-  const c=document.getElementById('view-'+view);
-  const chips=document.getElementById('navFilterChips');
-  window.scrollTo({top:0,behavior:'instant'});
-  if(c){c.classList.remove('view-scrolled');c._expanding=true;setTimeout(()=>{c._expanding=false;},600);}
-  if(chips){chips.innerHTML='';chips.classList.remove('visible');}
-}
-function _updateNavChips(view){
-  const chips=document.getElementById('navFilterChips');if(!chips)return;
-  const ms=document.getElementById(view==='trigger'?'monthSelTrig':view==='failure'?'monthSelFail':'monthSel');
-  const mt=ms?ms.options[ms.selectedIndex]?.text||'All':'All';
-  const ov=view==='trigger'?selOEMTrig:view==='failure'?selOEMFail:selOEM;
-  const ot=ov==='all'?'All OEMs':ov;
-  chips.innerHTML=
-    `<span class="nav-chip" onclick="expandFilters('${view}')" title="Show filters">📅 ${mt}</span>`+
-    `<span class="nav-chip${ov!=='all'?' active':''}" onclick="expandFilters('${view}')" title="Show filters">${ot}</span>`+
-    `<span class="nav-chip" onclick="expandFilters('${view}')" title="Show filters" style="padding:3px 7px;">↑ Filters</span>`;
-  chips.classList.add('visible');
-}
-function _collapseFilters(view,container){
-  if(view!=='leakage'){
-    const sel=view==='trigger'?'.grid-trig thead tr:first-child th':'.grid-fail thead tr:first-child th';
-    const h1=container.querySelector(sel);
-    if(h1)document.documentElement.style.setProperty(view==='trigger'?'--trig-h1':'--fail-h1',h1.offsetHeight+'px');
-  }
-  container.classList.add('view-scrolled');
-  _updateNavChips(view);
-  const _ts=container.querySelector('.tscroll');
-  if(_ts){
-    const _clean=function(){_ts.removeEventListener('wheel',_onW);_ts.removeEventListener('scroll',_onS);};
-    const _onW=function(e){if(container.classList.contains('view-scrolled')&&_ts.scrollTop===0&&e.deltaY<0){_clean();expandFilters(view);}};
-    const _onS=function(){if(container.classList.contains('view-scrolled')&&_ts.scrollTop===0){_clean();expandFilters(view);}};
-    _ts.addEventListener('wheel',_onW,{passive:true});
-    _ts.addEventListener('scroll',_onS,{passive:true});
-  }
-}
-function setupFilterCollapse(){
-  const sbH=_sbH();
+/* ── STICKY HEADER OFFSETS ── */
+function _updateStickyOffsets(){
+  const sb=document.querySelector('.sticky-band');
+  const sbH=sb?sb.offsetHeight:104;
   document.documentElement.style.setProperty('--sticky-band-h',sbH+'px');
-  ['trigger','failure','leakage'].forEach(view=>{
-    const con=document.getElementById('view-'+view);
-    const sec=document.getElementById(_secMap[view]);
-    if(!con||!sec)return;
-    new IntersectionObserver(function(entries){
-      entries.forEach(e=>{
-        if(!e.isIntersecting&&activeView===view&&!con.classList.contains('view-scrolled')&&!con._expanding)
-          _collapseFilters(view,con);
-      });
-    },{root:null,rootMargin:`-${sbH}px 0px 0px 0px`,threshold:0}).observe(sec);
+  ['trigger','failure'].forEach(view=>{
+    const prefix=view==='trigger'?'trig':'fail';
+    const sel=view==='trigger'?'#view-trigger .grid-trig thead tr:first-child':'#view-failure .grid-fail thead tr:first-child';
+    const row=document.querySelector(sel);
+    if(row&&row.offsetHeight>0)document.documentElement.style.setProperty('--'+prefix+'-h1',row.offsetHeight+'px');
   });
 }
-setupFilterCollapse();
+_updateStickyOffsets();
 
 /* Auto-refresh from Google Sheets on page load (works on GitHub Pages; silently skipped in artifact sandbox) */
 setTimeout(()=>fetchFromSheets().catch(()=>{}),200);
