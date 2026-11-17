@@ -323,7 +323,7 @@ select:disabled{opacity:.45;cursor:default;}
 @media(prefers-color-scheme:dark){:root:not([data-theme="light"]) .grid-fail td{color:var(--fg)!important;}}
 :root[data-theme="dark"] .grid-fail td{color:var(--fg)!important;}
 /* ── STICKY TABLE HEADERS ── */
-.grid-table thead th{background:var(--surface-3);position:sticky;top:var(--sticky-band-h,104px);z-index:4;}
+.grid-table thead th{position:sticky;top:var(--sticky-band-h,104px);z-index:4;}
 .grid-trig thead tr:nth-child(2) th{position:sticky;top:calc(var(--sticky-band-h,104px) + var(--trig-h1,32px));z-index:3;}
 .grid-fail thead tr:nth-child(2) th{position:sticky;top:calc(var(--sticky-band-h,104px) + var(--fail-h1,32px));z-index:3;}
 </style>
