@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+﻿<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>Digital Campaign Tracker</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -335,6 +335,7 @@ select:disabled{opacity:.45;cursor:default;}
 .view-scrolled .grid-trig thead tr:nth-child(1) th,.view-scrolled .grid-fail thead tr:nth-child(1) th{position:sticky;top:0;z-index:4;}
 .view-scrolled .grid-trig thead tr:nth-child(2) th{position:sticky;top:var(--trig-h1,34px);z-index:3;}
 .view-scrolled .grid-fail thead tr:nth-child(2) th{position:sticky;top:var(--fail-h1,34px);z-index:3;}
+.view-scrolled .grid-leak thead th{position:sticky;top:0;z-index:4;}
 </style>
 
 <div class="sticky-band"><header class="hdr">
@@ -364,6 +365,7 @@ select:disabled{opacity:.45;cursor:default;}
 </div>
 
 <main class="main" id="view-leakage">
+  <div class="filter-section" id="filterSectionLeakage">
   <div class="kpi-strip">
     <div class="kpi kpi-leads"><div class="kpi-icon">🎯</div><div class="kpi-lbl">Meta Generation</div><div class="kpi-val" id="kLeads">—</div><div class="kpi-note" id="kLeadsNote">filtered period</div></div>
     <div class="kpi kpi-spends"><div class="kpi-icon">💸</div><div class="kpi-lbl">Total Spends</div><div class="kpi-val" id="kSpends">—</div><div class="kpi-note" id="kSpendsNote">total spend</div></div>
@@ -405,6 +407,7 @@ select:disabled{opacity:.45;cursor:default;}
       <button class="toggle-btn active" id="btnGroup" onclick="setGroup(true)">By Date</button>
     </div>
   </div>
+  </div><!-- /filter-section leakage -->
 
   <div class="tcard">
     <div class="tcard-hdr">
@@ -2166,7 +2169,7 @@ document.addEventListener('click',e=>{
 });
 
 function switchView(v){
-  ['trigger','failure'].forEach(pv=>{const pc=document.getElementById('view-'+pv);if(pc)pc.classList.remove('view-scrolled');});
+  ['leakage','trigger','failure'].forEach(pv=>{const pc=document.getElementById('view-'+pv);if(pc)pc.classList.remove('view-scrolled');});
   const chips=document.getElementById('navFilterChips');
   if(chips){chips.innerHTML='';chips.classList.remove('visible');}
   window.scrollTo({top:0,behavior:'instant'});
@@ -2459,9 +2462,9 @@ function expandFilters(view){
 }
 function _updateNavChips(view){
   const chips=document.getElementById('navFilterChips');if(!chips)return;
-  const ms=document.getElementById(view==='trigger'?'monthSelTrig':'monthSelFail');
+  const ms=document.getElementById(view==='trigger'?'monthSelTrig':view==='failure'?'monthSelFail':'monthSel');
   const mt=ms?ms.options[ms.selectedIndex]?.text||'All':'All';
-  const ov=view==='trigger'?selOEMTrig:selOEMFail;
+  const ov=view==='trigger'?selOEMTrig:view==='failure'?selOEMFail:selOEM;
   const ot=ov==='all'?'All OEMs':ov;
   chips.innerHTML=
     `<span class="nav-chip" onclick="expandFilters('${view}')" title="Show filters">📅 ${mt}</span>`+
@@ -2470,8 +2473,11 @@ function _updateNavChips(view){
   chips.classList.add('visible');
 }
 function _collapseFilters(view,container){
-  const h1=container.querySelector(view==='trigger'?'.grid-trig thead tr:first-child th':'.grid-fail thead tr:first-child th');
-  if(h1)document.documentElement.style.setProperty(view==='trigger'?'--trig-h1':'--fail-h1',h1.offsetHeight+'px');
+  if(view!=='leakage'){
+    const sel=view==='trigger'?'.grid-trig thead tr:first-child th':'.grid-fail thead tr:first-child th';
+    const h1=container.querySelector(sel);
+    if(h1)document.documentElement.style.setProperty(view==='trigger'?'--trig-h1':'--fail-h1',h1.offsetHeight+'px');
+  }
   container.classList.add('view-scrolled');
   _updateNavChips(view);
   window.scrollTo({top:0,behavior:'instant'});
@@ -2480,13 +2486,13 @@ function setupFilterCollapse(){
   const sbH=_sbH();
   document.documentElement.style.setProperty('--sticky-band-h',sbH+'px');
   window.addEventListener('scroll',function(){
-    ['trigger','failure'].forEach(view=>{
+    ['trigger','failure','leakage'].forEach(view=>{
       if(activeView!==view)return;
       const con=document.getElementById('view-'+view);
       if(!con||con.classList.contains('view-scrolled'))return;
       const sec=document.getElementById('filterSection'+_cap(view));
       if(!sec)return;
-      if(sec.getBoundingClientRect().bottom<sbH)_collapseFilters(view,con);
+      if(window.scrollY>20)_collapseFilters(view,con);
     });
   },{passive:true});
 }
