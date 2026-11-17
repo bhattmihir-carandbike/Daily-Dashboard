@@ -2457,7 +2457,8 @@ function expandFilters(view){
   const chips=document.getElementById('navFilterChips');
   if(c)c.classList.remove('view-scrolled');
   if(chips){chips.innerHTML='';chips.classList.remove('visible');}
-  const sec=document.getElementById('filterSection'+_cap(view));
+  const _secMap={'trigger':'filterSectionTrig','failure':'filterSectionFail','leakage':'filterSectionLeakage'};
+  const sec=document.getElementById(_secMap[view]);
   if(sec){const y=sec.getBoundingClientRect().top+window.scrollY-_sbH()-8;window.scrollTo({top:Math.max(0,y),behavior:'smooth'});}
 }
 function _updateNavChips(view){
@@ -2481,6 +2482,8 @@ function _collapseFilters(view,container){
   container.classList.add('view-scrolled');
   _updateNavChips(view);
   window.scrollTo({top:0,behavior:'instant'});
+  const _ts=container.querySelector('.tscroll');
+  if(_ts){_ts.addEventListener('scroll',function _onBack(){if(_ts.scrollTop===0){_ts.removeEventListener('scroll',_onBack);expandFilters(view);}},{passive:true});}
 }
 function setupFilterCollapse(){
   const sbH=_sbH();
@@ -2490,7 +2493,8 @@ function setupFilterCollapse(){
       if(activeView!==view)return;
       const con=document.getElementById('view-'+view);
       if(!con||con.classList.contains('view-scrolled'))return;
-      const sec=document.getElementById('filterSection'+_cap(view));
+      const _secMap={'trigger':'filterSectionTrig','failure':'filterSectionFail','leakage':'filterSectionLeakage'};
+      const sec=document.getElementById(_secMap[view]);
       if(!sec)return;
       if(window.scrollY>20)_collapseFilters(view,con);
     });
