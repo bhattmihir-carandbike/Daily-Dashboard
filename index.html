@@ -326,6 +326,10 @@ select:disabled{opacity:.45;cursor:default;}
 .grid-table thead th{position:sticky;top:var(--sticky-band-h,104px);z-index:4;}
 .grid-trig thead tr:nth-child(2) th{position:sticky;top:calc(var(--sticky-band-h,104px) + var(--trig-h1,32px));z-index:3;}
 .grid-fail thead tr:nth-child(2) th{position:sticky;top:calc(var(--sticky-band-h,104px) + var(--fail-h1,32px));z-index:3;}
+/* ── SORT INDICATORS FOR TRIGGER/FAILURE ── */
+.grid-trig th[data-sort],.grid-fail th[data-sort]{cursor:pointer;user-select:none;}
+.grid-trig th[data-sort] .sort-ico,.grid-fail th[data-sort] .sort-ico{color:rgba(255,255,255,.5);opacity:1;}
+.grid-trig th[data-sort].th-sorted .sort-ico,.grid-fail th[data-sort].th-sorted .sort-ico{color:#fff;opacity:1;}
 </style>
 
 <div class="sticky-band"><header class="hdr">
@@ -458,17 +462,17 @@ select:disabled{opacity:.45;cursor:default;}
       <table class="grid-table grid-trig" id="trigTable">
         <thead>
           <tr>
-            <th rowspan="2" class="grp-hdr" style="background:#1e3a8a;vertical-align:bottom;">Date</th>
+            <th rowspan="2" class="grp-hdr" data-sort="date" style="background:#1e3a8a;vertical-align:bottom;">Date <span class="sort-ico">↕</span></th>
             <th colspan="4" class="grp-hdr grp-gen">Generation</th>
             <th colspan="4" class="grp-hdr grp-trig">Trigger</th>
             <th colspan="4" class="grp-hdr grp-fail">Failure %</th>
-            <th rowspan="2" class="grp-hdr grp-spends" style="vertical-align:bottom;">Spends</th>
-            <th rowspan="2" class="grp-hdr grp-cpl" style="vertical-align:bottom;">Trigger CPL</th>
+            <th rowspan="2" class="grp-hdr grp-spends" data-sort="spends" style="vertical-align:bottom;">Spends <span class="sort-ico">↕</span></th>
+            <th rowspan="2" class="grp-hdr grp-cpl" data-sort="cpl" style="vertical-align:bottom;">Trigger CPL <span class="sort-ico">↕</span></th>
           </tr>
           <tr>
-            <th>Facebook</th><th>Organic</th><th>Cross Sell</th><th>Total</th>
-            <th>Facebook</th><th>Organic</th><th>Cross Sell</th><th>Total</th>
-            <th>Facebook</th><th>Organic</th><th>Cross Sell</th><th>Total</th>
+            <th data-sort="gen_fb">Facebook <span class="sort-ico">↕</span></th><th data-sort="gen_org">Organic <span class="sort-ico">↕</span></th><th data-sort="gen_cross">Cross Sell <span class="sort-ico">↕</span></th><th data-sort="gen_tot">Total <span class="sort-ico">↕</span></th>
+            <th data-sort="trig_fb">Facebook <span class="sort-ico">↕</span></th><th data-sort="trig_org">Organic <span class="sort-ico">↕</span></th><th data-sort="trig_cross">Cross Sell <span class="sort-ico">↕</span></th><th data-sort="trig_tot">Total <span class="sort-ico">↕</span></th>
+            <th data-sort="fail_fb">Facebook <span class="sort-ico">↕</span></th><th data-sort="fail_org">Organic <span class="sort-ico">↕</span></th><th data-sort="fail_cross">Cross Sell <span class="sort-ico">↕</span></th><th data-sort="fail_tot">Total <span class="sort-ico">↕</span></th>
           </tr>
         </thead>
         <tbody id="trigBody"></tbody>
@@ -508,17 +512,17 @@ select:disabled{opacity:.45;cursor:default;}
       <table class="grid-table grid-fail" id="failTable">
         <thead>
           <tr>
-            <th rowspan="2" class="grp-hdr" style="background:#1e3a8a;vertical-align:bottom;">Date</th>
+            <th rowspan="2" class="grp-hdr" data-sort="date" style="background:#1e3a8a;vertical-align:bottom;">Date <span class="sort-ico">↕</span></th>
             <th colspan="7" class="grp-hdr" style="background:#dc2626;color:#fff;">Failed Leads</th>
-            <th rowspan="2" class="grp-hdr" style="background:#b91c1c;color:#fff;vertical-align:bottom;">Fail %</th>
+            <th rowspan="2" class="grp-hdr" data-sort="fail_pct" style="background:#b91c1c;color:#fff;vertical-align:bottom;">Fail % <span class="sort-ico">↕</span></th>
             <th colspan="7" class="grp-hdr" style="background:#d97706;color:#fff;">Duplicate Leads</th>
-            <th rowspan="2" class="grp-hdr" style="background:#b45309;color:#fff;vertical-align:bottom;">Dupl %</th>
-            <th rowspan="2" class="grp-hdr" style="background:#374151;color:#fff;vertical-align:bottom;">Total</th>
-            <th rowspan="2" class="grp-hdr" style="background:#1f2937;color:#fff;vertical-align:bottom;">Total %</th>
+            <th rowspan="2" class="grp-hdr" data-sort="dupl_pct" style="background:#b45309;color:#fff;vertical-align:bottom;">Dupl % <span class="sort-ico">↕</span></th>
+            <th rowspan="2" class="grp-hdr" data-sort="gen_tot" style="background:#374151;color:#fff;vertical-align:bottom;">Total <span class="sort-ico">↕</span></th>
+            <th rowspan="2" class="grp-hdr" data-sort="total_pct" style="background:#1f2937;color:#fff;vertical-align:bottom;">Total % <span class="sort-ico">↕</span></th>
           </tr>
           <tr>
-            <th>Facebook</th><th>FB%</th><th>Organic</th><th>Org%</th><th>Cross Sell</th><th>CS%</th><th>Total</th>
-            <th>Facebook</th><th>FB%</th><th>Organic</th><th>Org%</th><th>Cross Sell</th><th>CS%</th><th>Total</th>
+            <th data-sort="fail_fb">Facebook <span class="sort-ico">↕</span></th><th data-sort="fail_fb_pct">FB% <span class="sort-ico">↕</span></th><th data-sort="fail_org">Organic <span class="sort-ico">↕</span></th><th data-sort="fail_org_pct">Org% <span class="sort-ico">↕</span></th><th data-sort="fail_cross">Cross Sell <span class="sort-ico">↕</span></th><th data-sort="fail_cross_pct">CS% <span class="sort-ico">↕</span></th><th data-sort="fail_tot">Total <span class="sort-ico">↕</span></th>
+            <th data-sort="dupl_fb">Facebook <span class="sort-ico">↕</span></th><th data-sort="dupl_fb_pct">FB% <span class="sort-ico">↕</span></th><th data-sort="dupl_org">Organic <span class="sort-ico">↕</span></th><th data-sort="dupl_org_pct">Org% <span class="sort-ico">↕</span></th><th data-sort="dupl_cross">Cross Sell <span class="sort-ico">↕</span></th><th data-sort="dupl_cross_pct">CS% <span class="sort-ico">↕</span></th><th data-sort="dupl_tot">Total <span class="sort-ico">↕</span></th>
           </tr>
         </thead>
         <tbody id="failTbody"></tbody>
@@ -1392,6 +1396,8 @@ let selMonth=_latestMonth||'all',selOEM='all';
 let selModels=new Set(); // empty = all models
 let FB_LEADS={};let FB_MODEL_LEADS={};
 let sortCol='date',sortDir='asc',groupByDate=true,maxGcpl=100;
+let sortColTrig='date',sortDirTrig='asc';
+let sortColFail='date',sortDirFail='asc';
 let DT_GEN={},DT_TRIG={},DT_GEN_M={},DT_TRIG_M={};
 let DT_FAIL={},DT_DUPL={},DT_STATE={},DT_FAIL_M={},DT_DUPL_M={};
 let activeView='leakage';
@@ -2117,18 +2123,38 @@ function renderTrigger(){
     Object.keys(DT_GEN).forEach(k=>{const sep=k.lastIndexOf('|');const date=k.substring(0,sep);const partner=k.substring(sep+1);
       if(!pp.includes(partner))return;if(selMonthTrig!=='all'&&!date.startsWith(selMonthTrig))return;dateSet.add(date);});
   }
-  const dates=[...dateSet].sort();
-  document.getElementById('trigTableCount').textContent=dates.length+' rows';
-  if(!dates.length){document.getElementById('trigBody').innerHTML=`<tr><td colspan="15"><div class="empty-state"><div class="empty-icon">&#128219;</div><div class="empty-text">No trigger data for this filter.</div></div></td></tr>`;return;}
+  document.getElementById('trigTableCount').textContent=dateSet.size+' rows';
+  if(!dateSet.size){document.getElementById('trigBody').innerHTML=`<tr><td colspan="15"><div class="empty-state"><div class="empty-icon">&#128219;</div><div class="empty-text">No trigger data for this filter.</div></div></td></tr>`;return;}
+  const rowData=[...dateSet].map(date=>{
+    const gen=getDTCounts(date,DT_GEN,DT_GEN_M);
+    const trig=getDTCounts(date,DT_TRIG,DT_TRIG_M);
+    const spends=getSpendsTrig(date);
+    const gT=gen.fb+gen.org+gen.cross,tT=trig.fb+trig.org+trig.cross;
+    const cpl=trig.fb>0?spends/trig.fb:0;
+    return{date,gen,trig,gT,tT,spends,cpl,
+      fail_fb:gen.fb>0?(gen.fb-trig.fb)/gen.fb*100:0,
+      fail_org:gen.org>0?(gen.org-trig.org)/gen.org*100:0,
+      fail_cross:gen.cross>0?(gen.cross-trig.cross)/gen.cross*100:0,
+      fail_tot:gT>0?(gT-tT)/gT*100:0};
+  });
+  rowData.sort((a,b)=>{
+    const dir=sortDirTrig==='asc'?1:-1;
+    if(sortColTrig==='date')return dir*(a.date<b.date?-1:a.date>b.date?1:0);
+    const map={gen_fb:[a.gen.fb,b.gen.fb],gen_org:[a.gen.org,b.gen.org],gen_cross:[a.gen.cross,b.gen.cross],gen_tot:[a.gT,b.gT],
+      trig_fb:[a.trig.fb,b.trig.fb],trig_org:[a.trig.org,b.trig.org],trig_cross:[a.trig.cross,b.trig.cross],trig_tot:[a.tT,b.tT],
+      fail_fb:[a.fail_fb,b.fail_fb],fail_org:[a.fail_org,b.fail_org],fail_cross:[a.fail_cross,b.fail_cross],fail_tot:[a.fail_tot,b.fail_tot],
+      spends:[a.spends,b.spends],cpl:[a.cpl,b.cpl]};
+    const p=map[sortColTrig];return p?dir*(p[0]-p[1]):0;
+  });
+  document.querySelectorAll('#trigTable thead th[data-sort]').forEach(th=>{
+    const on=th.dataset.sort===sortColTrig;th.classList.toggle('th-sorted',on);
+    const ico=th.querySelector('.sort-ico');if(ico)ico.textContent=on?(sortDirTrig==='asc'?'▲':'▼'):'↕';
+  });
   const totG={fb:0,org:0,cross:0},totT={fb:0,org:0,cross:0};let totS=0;
   const n=v=>v?fI(v):'&#8212;';
   const fp=(g,t)=>g>0?((g-t)/g*100).toFixed(1)+'%':'&#8212;';
-  let html=dates.map(date=>{
-    const gen=getDTCounts(date,DT_GEN,DT_GEN_M);
-    const trig=getDTCounts(date,DT_TRIG,DT_TRIG_M);
-    const spends=getSpendsTrig(date);const cpl=trig.fb>0?spends/trig.fb:0;
+  let html=rowData.map(({date,gen,trig,gT,tT,spends,cpl})=>{
     ['fb','org','cross'].forEach(s=>{totG[s]+=gen[s];totT[s]+=trig[s];});totS+=spends;
-    const gT=gen.fb+gen.org+gen.cross,tT=trig.fb+trig.org+trig.cross;
     const[y,m,d]=date.split('-').map(Number);const dt=new Date(y,m-1,d);
     const isW=dt.getDay()===0||dt.getDay()===6;
     const dd=String(d).padStart(2,'0')+' '+MONTHS_SHORT[m];const dn=DAYS[dt.getDay()];
@@ -2156,6 +2182,18 @@ document.addEventListener('click',e=>{
   if(m&&!m.contains(e.target)){const drop=document.getElementById('modelDropTrig');const btn=document.getElementById('modelMultiBtnTrig');if(drop){drop.hidden=true;if(btn)btn.classList.remove('open');}}
   const mf=document.getElementById('modelMultiFail');
   if(mf&&!mf.contains(e.target)){const drop=document.getElementById('modelDropFail');const btn=document.getElementById('modelMultiBtnFail');if(drop){drop.hidden=true;if(btn)btn.classList.remove('open');}}
+});
+document.getElementById('trigTable').addEventListener('click',e=>{
+  const th=e.target.closest('th[data-sort]');if(!th)return;
+  const col=th.dataset.sort;
+  sortDirTrig=sortColTrig===col?(sortDirTrig==='asc'?'desc':'asc'):(col==='date'?'asc':'desc');
+  sortColTrig=col;renderTrigger();
+});
+document.getElementById('failTable').addEventListener('click',e=>{
+  const th=e.target.closest('th[data-sort]');if(!th)return;
+  const col=th.dataset.sort;
+  sortDirFail=sortColFail===col?(sortDirFail==='asc'?'desc':'asc'):(col==='date'?'asc':'desc');
+  sortColFail=col;renderFailure();
 });
 
 function switchView(v){
@@ -2395,34 +2433,61 @@ function renderFailure(){
   </div>`;
   document.getElementById('failBody').innerHTML=h;
   /* Grid */
-  const dates=[...dateSet].sort();
   document.getElementById('failTableTitle').textContent='Failure Analysis — '+mLabel;
-  document.getElementById('failRowCount').textContent=dates.length+' rows';
-  const totR={fb:0,org:0,cross:0},totF={fb:0,org:0,cross:0},totD={fb:0,org:0,cross:0};
-  let rows='';
-  dates.forEach(date=>{
+  document.getElementById('failRowCount').textContent=dateSet.size+' rows';
+  const failRowData=[...dateSet].map(date=>{
     const gen=getFDMCounts(date,DT_GEN,DT_GEN_M);
     const fail=getFDMCounts(date,DT_FAIL,DT_FAIL_M);
     const dupl=getFDMCounts(date,DT_DUPL,DT_DUPL_M);
     const gT=gen.fb+gen.org+gen.cross,fT=fail.fb+fail.org+fail.cross,dT=dupl.fb+dupl.org+dupl.cross;
+    return{date,gen,fail,dupl,gT,fT,dT,
+      fail_fb_pct:gen.fb>0?fail.fb/gen.fb*100:0,
+      fail_org_pct:gen.org>0?fail.org/gen.org*100:0,
+      fail_cross_pct:gen.cross>0?fail.cross/gen.cross*100:0,
+      fail_pct:gT>0?fT/gT*100:0,
+      dupl_fb_pct:gen.fb>0?dupl.fb/gen.fb*100:0,
+      dupl_org_pct:gen.org>0?dupl.org/gen.org*100:0,
+      dupl_cross_pct:gen.cross>0?dupl.cross/gen.cross*100:0,
+      dupl_pct:gT>0?dT/gT*100:0,
+      total_pct:gT>0?(fT+dT)/gT*100:0};
+  });
+  failRowData.sort((a,b)=>{
+    const dir=sortDirFail==='asc'?1:-1;
+    if(sortColFail==='date')return dir*(a.date<b.date?-1:a.date>b.date?1:0);
+    const map={fail_fb:[a.fail.fb,b.fail.fb],fail_fb_pct:[a.fail_fb_pct,b.fail_fb_pct],
+      fail_org:[a.fail.org,b.fail.org],fail_org_pct:[a.fail_org_pct,b.fail_org_pct],
+      fail_cross:[a.fail.cross,b.fail.cross],fail_cross_pct:[a.fail_cross_pct,b.fail_cross_pct],
+      fail_tot:[a.fT,b.fT],fail_pct:[a.fail_pct,b.fail_pct],
+      dupl_fb:[a.dupl.fb,b.dupl.fb],dupl_fb_pct:[a.dupl_fb_pct,b.dupl_fb_pct],
+      dupl_org:[a.dupl.org,b.dupl.org],dupl_org_pct:[a.dupl_org_pct,b.dupl_org_pct],
+      dupl_cross:[a.dupl.cross,b.dupl.cross],dupl_cross_pct:[a.dupl_cross_pct,b.dupl_cross_pct],
+      dupl_tot:[a.dT,b.dT],dupl_pct:[a.dupl_pct,b.dupl_pct],
+      gen_tot:[a.gT,b.gT],total_pct:[a.total_pct,b.total_pct]};
+    const p=map[sortColFail];return p?dir*(p[0]-p[1]):0;
+  });
+  document.querySelectorAll('#failTable thead th[data-sort]').forEach(th=>{
+    const on=th.dataset.sort===sortColFail;th.classList.toggle('th-sorted',on);
+    const ico=th.querySelector('.sort-ico');if(ico)ico.textContent=on?(sortDirFail==='asc'?'▲':'▼'):'↕';
+  });
+  const totR={fb:0,org:0,cross:0},totF={fb:0,org:0,cross:0},totD={fb:0,org:0,cross:0};
+  const n2=v=>v||'&#8212;';const sp=(v,g)=>g>0?`${(v/g*100).toFixed(1)}%`:'&#8212;';
+  let rows=failRowData.map(({date,gen,fail,dupl,gT,fT,dT})=>{
     totR.fb+=gen.fb;totR.org+=gen.org;totR.cross+=gen.cross;
     totF.fb+=fail.fb;totF.org+=fail.org;totF.cross+=fail.cross;
     totD.fb+=dupl.fb;totD.org+=dupl.org;totD.cross+=dupl.cross;
     const d2=new Date(date+'T00:00:00');const dy=DAYS[d2.getDay()];const isWe=d2.getDay()===0||d2.getDay()===6;
     const dm=date.split('-');const dLabel=`${+dm[2]} ${MONTHS_SHORT[+dm[1]]}`;
-    const n=v=>v||'&#8212;';
-    const sp=(v,g)=>g>0?`${(v/g*100).toFixed(1)}%`:'&#8212;';
-    rows+=`<tr class="${isWe?'weekend-row':''}">
+    return`<tr class="${isWe?'weekend-row':''}">
       <td class="date-cell" style="white-space:nowrap;"><strong>${dLabel}</strong> <span class="day-label${isWe?' we':''}" style="font-weight:400;font-size:10px;color:var(--fg-3);">${dy}</span></td>
-      <td>${n(fail.fb)}</td><td class="src-pct-col">${sp(fail.fb,gen.fb)}</td><td>${n(fail.org)}</td><td class="src-pct-col">${sp(fail.org,gen.org)}</td><td>${n(fail.cross)}</td><td class="src-pct-col">${sp(fail.cross,gen.cross)}</td><td class="num-total">${n(fT)}</td>
+      <td>${n2(fail.fb)}</td><td class="src-pct-col">${sp(fail.fb,gen.fb)}</td><td>${n2(fail.org)}</td><td class="src-pct-col">${sp(fail.org,gen.org)}</td><td>${n2(fail.cross)}</td><td class="src-pct-col">${sp(fail.cross,gen.cross)}</td><td class="num-total">${n2(fT)}</td>
       <td class="num-leakage">${gT>0?(fT/gT*100).toFixed(1)+'%':'&#8212;'}</td>
-      <td>${n(dupl.fb)}</td><td class="src-pct-col">${sp(dupl.fb,gen.fb)}</td><td>${n(dupl.org)}</td><td class="src-pct-col">${sp(dupl.org,gen.org)}</td><td>${n(dupl.cross)}</td><td class="src-pct-col">${sp(dupl.cross,gen.cross)}</td><td class="num-total">${n(dT)}</td>
+      <td>${n2(dupl.fb)}</td><td class="src-pct-col">${sp(dupl.fb,gen.fb)}</td><td>${n2(dupl.org)}</td><td class="src-pct-col">${sp(dupl.org,gen.org)}</td><td>${n2(dupl.cross)}</td><td class="src-pct-col">${sp(dupl.cross,gen.cross)}</td><td class="num-total">${n2(dT)}</td>
       <td class="num-leakage">${gT>0?(dT/gT*100).toFixed(1)+'%':'&#8212;'}</td>
-      <td class="num-total">${n(gT)}</td>
+      <td class="num-total">${n2(gT)}</td>
       <td class="num-total" style="font-weight:800;">${gT>0?((fT+dT)/gT*100).toFixed(1)+'%':'&#8212;'}</td>
     </tr>`;
-  });
-  if(dates.length){
+  }).join('');
+  if(failRowData.length){
     const tgT=totR.fb+totR.org+totR.cross,tfT=totF.fb+totF.org+totF.cross,tdT=totD.fb+totD.org+totD.cross;
     const tsp=(v,g)=>g>0?`${(v/g*100).toFixed(1)}%`:'&#8212;';
     rows+=`<tr class="total-row"><td>TOTAL</td>
@@ -2434,7 +2499,7 @@ function renderFailure(){
       <td class="num-total" style="font-weight:800;">${tgT>0?((tfT+tdT)/tgT*100).toFixed(1)+'%':'&#8212;'}</td>
     </tr>`;
   }
-  document.getElementById('failTbody').innerHTML=rows||'<tr><td colspan="12" class="empty-state">No failure data for this filter.</td></tr>';
+  document.getElementById('failTbody').innerHTML=rows||'<tr><td colspan="19" class="empty-state">No failure data for this filter.</td></tr>';
 }
 
 /* ── STICKY HEADER OFFSETS ── */
